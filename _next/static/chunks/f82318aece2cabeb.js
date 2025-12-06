@@ -782,9 +782,9 @@ ABOUT SELVA G:
 - Education: B.E in Artificial Intelligence & Machine Learning from AMC Engineering College, Bangalore (2020-2024, CGPA: 8.06/10)
 - Location: Bangalore, India
 - Contact: +91 9363087305 | selvaofficialmail@gmail.com
-- Portfolio: https://selva.rf.gd
+- Portfolio: https://selva-aiworks.github.io
 - LinkedIn: https://www.linkedin.com/in/selva-g
-- GitHub: https://github.com/SELVA-G-2003
+- GitHub: https://github.com/selva-aiworks
 
 EXPERIENCE:
 1. AI Software Engineer at *astTECS (Current) - Building unified communication and cloud telephony solutions
