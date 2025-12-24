@@ -1,0 +1,52 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="premiumGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="40%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#a855f7;stop-opacity:1" />
+    </linearGradient>
+    
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="15" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <filter id="innerDepth" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="blur"/>
+        <feOffset dx="2" dy="4" result="offsetBlur"/>
+        <feSpecularLighting in="blur" surfaceScale="5" specularConstant="1" specularExponent="20" lighting-color="#ffffff" result="specOut">
+            <fePointLight x="-5000" y="-10000" z="20000"/>
+        </feSpecularLighting>
+        <feComposite in="specOut" in2="SourceAlpha" operator="in" result="specOut"/>
+        <feComposite in="SourceGraphic" in2="specOut" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litPaint"/>
+    </filter>
+  </defs>
+
+  <!-- Background subtle glow -->
+  <circle cx="256" cy="256" r="240" fill="url(#premiumGradient)" opacity="0.05" />
+
+  <!-- Main Fluid 'S' Shape - Abstract Ribbon Style -->
+  <g transform="translate(64, 64) scale(0.75)" filter="url(#softGlow)">
+      <path d="M 360 120 
+               C 360 40, 200 40, 200 120 
+               C 200 180, 400 220, 400 300 
+               C 400 420, 150 420, 150 300 
+               M 150 300 
+               L 110 300 
+               C 110 460, 440 460, 440 300 
+               C 440 200, 240 160, 240 120 
+               C 240 80, 360 80, 360 120 Z" 
+            fill="url(#premiumGradient)" 
+            fill-rule="evenodd"
+            stroke="none"
+      />
+      <!-- Shiny Overlay to enhance 'Premium' feel -->
+      <path d="M 360 120 C 360 40, 200 40, 200 120 C 200 180, 400 220, 400 300"
+            fill="none"
+            stroke="white"
+            stroke-width="4"
+            opacity="0.3"
+            stroke-linecap="round"
+      />
+  </g>
+</svg>
