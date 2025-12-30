@@ -1,9 +1,9 @@
 1:"$Sreact.fragment"
-2:I[47257,["/_next/static/chunks/ff1a16fafef87110.js","/_next/static/chunks/7340adf74ff47ec0.js"],"ClientPageRoot"]
-3:I[52683,["/_next/static/chunks/21bae3ec5c0cb456.js","/_next/static/chunks/9d1463ace1a1812d.js","/_next/static/chunks/4dced034c2d75292.js","/_next/static/chunks/fe9b4506861daa46.js","/_next/static/chunks/ba51a5b37938bd68.js","/_next/static/chunks/97d61a10d603c2b1.js","/_next/static/chunks/c52caf930a45fb89.js"],"default"]
-6:I[97367,["/_next/static/chunks/ff1a16fafef87110.js","/_next/static/chunks/7340adf74ff47ec0.js"],"OutletBoundary"]
+2:I[24495,["/selva/_next/static/chunks/e53edbe55f9a08a6.js"],"ClientPageRoot"]
+3:I[29117,["/selva/_next/static/chunks/600b7fe38cbbd57e.js","/selva/_next/static/chunks/848c7cecf169ea68.js","/selva/_next/static/chunks/39ad0bfc796c899e.js","/selva/_next/static/chunks/5b4e4017bd9244be.js","/selva/_next/static/chunks/756653bbd5797958.js","/selva/_next/static/chunks/bbd7fc33f36a42e6.js"],"default"]
+6:I[75372,["/selva/_next/static/chunks/e53edbe55f9a08a6.js"],"OutletBoundary"]
 7:"$Sreact.suspense"
-0:{"buildId":"6u_f0DR0tyl__ga8vvkdZ","rsc":["$","$1","c",{"children":[["$","$L2",null,{"Component":"$3","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@4","$@5"]}}],[["$","script","script-0",{"src":"/_next/static/chunks/ba51a5b37938bd68.js","async":true}],["$","script","script-1",{"src":"/_next/static/chunks/97d61a10d603c2b1.js","async":true}],["$","script","script-2",{"src":"/_next/static/chunks/c52caf930a45fb89.js","async":true}]],["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"loading":null,"isPartial":false}
+0:{"buildId":"8NAyheMpBvQaaTJN8ZvsB","rsc":["$","$1","c",{"children":[["$","$L2",null,{"Component":"$3","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@4","$@5"]}}],[["$","script","script-0",{"src":"/selva/_next/static/chunks/5b4e4017bd9244be.js","async":true}],["$","script","script-1",{"src":"/selva/_next/static/chunks/756653bbd5797958.js","async":true}],["$","script","script-2",{"src":"/selva/_next/static/chunks/bbd7fc33f36a42e6.js","async":true}]],["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"loading":null,"isPartial":false}
 4:{}
 5:"$0:rsc:props:children:0:props:serverProvidedParams:params"
 8:null
