@@ -48,19 +48,19 @@ const currentlyWorkingProjects = [
     title: 'Lip-Sync Avatar Generation',
     description: 'Generating lip-synced avatar videos from audio and source images/videos using open-source audio feature extractors and diffusion models.',
     tags: ['Generative AI', 'Diffusion Models', 'Audio Processing', 'Open Source'],
-    image: '/projects/lipsync_avatar_stunning.png'
+    image: '/projects/lipsync_avatar_stunning.webp'
   },
   {
     title: 'LiveKit Agent Infrastructure',
     description: 'Setting up a complete LiveKit agent with local STT, TTS, and LLM services, utilizing open-source models for a fully self-hosted solution.',
     tags: ['LiveKit', 'Local LLM', 'STT/TTS', 'Agentic AI'],
-    image: '/projects/livekit_agent_stunning.png'
+    image: '/projects/livekit_agent_stunning.webp'
   },
   {
     title: 'Human-like Web Chatbot',
     description: 'Built a more human-like chatbot using JS and open-source LLM APIs, featuring seamless email integration for direct communication.',
     tags: ['Chatbot', 'Email Integration', 'Open Source LLM', 'JavaScript'],
-    image: '/projects/web_chatbot_stunning.png'
+    image: '/projects/web_chatbot_stunning.webp'
   }
 ];
 
@@ -99,12 +99,12 @@ export default function Home() {
   });
 
   const stackProjects = [
-    { id: 6, img: '/projects/codsoft_refined_v3.png', title: 'CodSoft AI Internship', link: '/projects#project-6' },
-    { id: 5, img: '/projects/robot.png', title: 'Autonomous Navigation', link: '/projects#project-5' },
-    { id: 4, img: '/projects/sports.png', title: 'Sports Classification', link: '/projects#project-4' },
-    { id: 3, img: '/projects/speech.png', title: 'Speech Recognition', link: '/projects#project-3' },
-    { id: 2, img: '/projects/webs.png', title: 'W.E.B.S - Web Extraction', link: '/projects#project-2' },
-    { id: 1, img: '/projects/pace.png', title: 'P.A.C.E - Pythonic AI', link: '/projects#project-1' }
+    { id: 6, img: '/projects/codsoft_refined_v3.webp', title: 'CodSoft AI Internship', link: '/projects#project-6' },
+    { id: 5, img: '/projects/robot.webp', title: 'Autonomous Navigation', link: '/projects#project-5' },
+    { id: 4, img: '/projects/sports.webp', title: 'Sports Classification', link: '/projects#project-4' },
+    { id: 3, img: '/projects/speech.webp', title: 'Speech Recognition', link: '/projects#project-3' },
+    { id: 2, img: '/projects/webs.webp', title: 'W.E.B.S - Web Extraction', link: '/projects#project-2' },
+    { id: 1, img: '/projects/pace.webp', title: 'P.A.C.E - Pythonic AI', link: '/projects#project-1' }
   ];
 
   return (
@@ -560,7 +560,7 @@ export default function Home() {
                 />
                 <a href="https://www.credly.com/badges/fb27106e-1c59-45a8-9d9e-04f06bdb0314/public_url" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 transition-colors text-sm flex items-center gap-2">
                   View Certificate <ExternalLink className="w-3 h-3" />
-                </a>                
+                </a>
                 <CertificationItem
                   title="Machine Learning Foundations"
                   issuer="AWS"
@@ -568,7 +568,7 @@ export default function Home() {
                 />
                 <a href="https://www.credly.com/badges/56eb0778-3f40-4d1c-aac0-ce0c867166c8/public_url" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 transition-colors text-sm flex items-center gap-2">
                   View Certificate <ExternalLink className="w-3 h-3" />
-                </a>                 
+                </a>
                 <CertificationItem
                   title="Python for Deep Learning"
                   issuer="Udemy"
@@ -576,7 +576,7 @@ export default function Home() {
                 />
                 <a href="https://www.udemy.com/certificate/UC-92cb7db8-c93d-4ff6-adf9-5ea2befa2777/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 transition-colors text-sm flex items-center gap-2">
                   View Certificate <ExternalLink className="w-3 h-3" />
-                </a>                 
+                </a>
               </div>
             </GlassCard>
           </motion.div>

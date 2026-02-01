@@ -15,7 +15,7 @@ const projects = [
     subtitle: 'Pythonic AI for Coding & Execution',
     date: 'Jan 2025',
     brief: 'Groundbreaking AI-powered code generation system that transforms natural language descriptions into executable Python code. Leverages NVIDIA NeMo API to bridge the gap between human intent and machine execution, enabling developers to describe functionality in plain English and receive working code.',
-    image: '/projects/pace.png',
+    image: '/projects/pace.webp',
     gradient: 'from-yellow-500/20 via-amber-500/20 to-orange-500/20',
     technologies: ['Python', 'NVIDIA NeMo', 'NLP', 'Code Generation', 'AI', 'API Integration', 'AST'],
     highlights: [
@@ -35,7 +35,7 @@ const projects = [
     subtitle: 'Web Extraction & Summarization System',
     date: 'March 2025',
     brief: 'Intelligent web content extraction and summarization platform utilizing advanced NLP techniques. Automatically scrapes, processes, and condenses web content into concise, meaningful summaries. Perfect for research, content curation, and information aggregation tasks.',
-    image: '/projects/webs.png',
+    image: '/projects/webs.webp',
     gradient: 'from-cyan-500/20 via-blue-500/20 to-indigo-500/20',
     technologies: ['Python', 'BeautifulSoup', 'NLP', 'Transformers', 'Web Scraping', 'Summarization'],
     highlights: [
@@ -55,7 +55,7 @@ const projects = [
     subtitle: 'Intelligent Voice AI with ChatGPT',
     date: 'April 2024',
     brief: 'Revolutionary voice interaction system combining speech recognition, natural language understanding, and text-to-speech synthesis. Integrates seamlessly with ChatGPT to create a fully conversational AI assistant capable of understanding context and generating human-like responses through voice.',
-    image: '/projects/speech.png',
+    image: '/projects/speech.webp',
     gradient: 'from-purple-500/20 via-violet-500/20 to-indigo-500/20',
     technologies: ['Python', 'OpenAI API', 'Speech Recognition', 'pyttsx3', 'NLP', 'Deep Learning', 'Audio Processing'],
     highlights: [
@@ -75,7 +75,7 @@ const projects = [
     subtitle: 'Advanced Image Recognition System',
     date: 'Nov 2023',
     brief: 'State-of-the-art computer vision model for precise sports activity classification. Leverages convolutional neural networks and transfer learning to achieve high accuracy in identifying various sports from images. The system demonstrates advanced understanding of image processing pipelines and deep learning architectures.',
-    image: '/projects/sports.png',
+    image: '/projects/sports.webp',
     gradient: 'from-orange-500/20 via-red-500/20 to-pink-500/20',
     technologies: ['Python', 'TensorFlow', 'Keras', 'OpenCV', 'CNN', 'Transfer Learning', 'Data Augmentation'],
     highlights: [
@@ -95,7 +95,7 @@ const projects = [
     subtitle: 'A* Pathfinding Algorithm Implementation',
     date: 'Dec 2024',
     brief: 'Sophisticated 2D autonomous navigation system implementing the A* pathfinding algorithm for optimal route calculation. The system efficiently navigates through complex grid-based environments, demonstrating strong algorithmic problem-solving and robotics fundamentals with real-time visualization.',
-    image: '/projects/robot.png',
+    image: '/projects/robot.webp',
     gradient: 'from-green-500/20 via-emerald-500/20 to-teal-500/20',
     technologies: ['Python', 'A* Algorithm', 'Pathfinding', 'Pygame', 'Data Structures', 'Visualization'],
     highlights: [
@@ -114,7 +114,7 @@ const projects = [
     subtitle: 'Comprehensive AI/ML Portfolio',
     date: 'Aug 2023',
     brief: 'A complete collection of cutting-edge AI projects developed during my internship at Codsoft. This portfolio demonstrates proficiency across multiple AI domains including computer vision, natural language processing, and predictive analytics. Each project showcases end-to-end implementation from data preprocessing to model deployment.',
-    image: '/projects/codsoft_refined_v3.png',
+    image: '/projects/codsoft_refined_v3.webp',
     gradient: 'from-blue-500/20 via-cyan-500/20 to-teal-500/20',
     technologies: ['Python', 'TensorFlow', 'PyTorch', 'Scikit-learn', 'Jupyter', 'Pandas', 'NumPy', 'Matplotlib'],
     highlights: [
@@ -182,9 +182,8 @@ export default function ProjectsPage() {
                 key={project.id}
                 id={`project-${project.id}`}
                 initial={{ opacity: 0, y: 60 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: false, margin: '-100px' }}
-                transition={{ delay: index * 0.15, duration: 0.6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1, duration: 0.5 }}
                 className="group"
               >
                 <GlassCard
