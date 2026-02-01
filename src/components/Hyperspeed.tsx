@@ -56,11 +56,12 @@ interface HyperspeedOptions {
 interface HyperspeedProps {
   effectOptions?: Partial<HyperspeedOptions>;
   isSpeedingUp?: boolean;
+  mousePosition?: { x: number; y: number };
 }
 
 const defaultOptions: HyperspeedOptions = {
-  onSpeedUp: () => {},
-  onSlowDown: () => {},
+  onSpeedUp: () => { },
+  onSlowDown: () => { },
   distortion: 'turbulentDistortion',
   length: 400,
   roadWidth: 10,
@@ -151,11 +152,11 @@ const distortions: Distortions = {
       const uAmp = mountainUniforms.uAmp.value;
       const distortion = new THREE.Vector3(
         Math.cos(progress * Math.PI * uFreq.x + time) * uAmp.x -
-          Math.cos(movementProgressFix * Math.PI * uFreq.x + time) * uAmp.x,
+        Math.cos(movementProgressFix * Math.PI * uFreq.x + time) * uAmp.x,
         nsin(progress * Math.PI * uFreq.y + time) * uAmp.y -
-          nsin(movementProgressFix * Math.PI * uFreq.y + time) * uAmp.y,
+        nsin(movementProgressFix * Math.PI * uFreq.y + time) * uAmp.y,
         nsin(progress * Math.PI * uFreq.z + time) * uAmp.z -
-          nsin(movementProgressFix * Math.PI * uFreq.z + time) * uAmp.z
+        nsin(movementProgressFix * Math.PI * uFreq.z + time) * uAmp.z
       );
       const lookAtAmp = new THREE.Vector3(2, 2, 2);
       const lookAtOffset = new THREE.Vector3(0, 0, -5);
@@ -183,9 +184,9 @@ const distortions: Distortions = {
       const uAmp = xyUniforms.uAmp.value;
       const distortion = new THREE.Vector3(
         Math.cos(progress * Math.PI * uFreq.x + time) * uAmp.x -
-          Math.cos(movementProgressFix * Math.PI * uFreq.x + time) * uAmp.x,
+        Math.cos(movementProgressFix * Math.PI * uFreq.x + time) * uAmp.x,
         Math.sin(progress * Math.PI * uFreq.y + time + Math.PI / 2) * uAmp.y -
-          Math.sin(movementProgressFix * Math.PI * uFreq.y + time + Math.PI / 2) * uAmp.y,
+        Math.sin(movementProgressFix * Math.PI * uFreq.y + time + Math.PI / 2) * uAmp.y,
         0
       );
       const lookAtAmp = new THREE.Vector3(2, 0.4, 1);
@@ -214,9 +215,9 @@ const distortions: Distortions = {
       const uAmp = LongRaceUniforms.uAmp.value;
       const distortion = new THREE.Vector3(
         Math.sin(progress * Math.PI * uFreq.x + time) * uAmp.x -
-          Math.sin(camProgress * Math.PI * uFreq.x + time) * uAmp.x,
+        Math.sin(camProgress * Math.PI * uFreq.x + time) * uAmp.x,
         Math.sin(progress * Math.PI * uFreq.y + time) * uAmp.y -
-          Math.sin(camProgress * Math.PI * uFreq.y + time) * uAmp.y,
+        Math.sin(camProgress * Math.PI * uFreq.y + time) * uAmp.y,
         0
       );
       const lookAtAmp = new THREE.Vector3(1, 1, 0);
@@ -935,6 +936,7 @@ class App {
   speedUpTarget: number;
   speedUp: number;
   timeOffset: number;
+  mouseOffset: { x: number; y: number };
 
   constructor(container: HTMLElement, options: HyperspeedOptions) {
     this.options = options;
@@ -998,6 +1000,7 @@ class App {
     this.speedUpTarget = 0;
     this.speedUp = 0;
     this.timeOffset = 0;
+    this.mouseOffset = { x: 0, y: 0 };
 
     this.tick = this.tick.bind(this);
     this.init = this.init.bind(this);
@@ -1154,10 +1157,13 @@ class App {
 
     if (typeof this.options.distortion === 'object' && this.options.distortion.getJS) {
       const distortion = this.options.distortion.getJS(0.025, time);
+      // Apply smooth mouse offset for steering (reduced intensity for smoother feel)
+      const mouseOffsetX = this.mouseOffset.x * 15;
+      const mouseOffsetY = this.mouseOffset.y * 10;
       this.camera.lookAt(
         new THREE.Vector3(
-          this.camera.position.x + distortion.x,
-          this.camera.position.y + distortion.y,
+          this.camera.position.x + distortion.x + mouseOffsetX,
+          this.camera.position.y + distortion.y + mouseOffsetY,
           this.camera.position.z + distortion.z
         )
       );
@@ -1217,14 +1223,14 @@ class App {
   }
 }
 
-const Hyperspeed: FC<HyperspeedProps> = ({ effectOptions = {}, isSpeedingUp = false }) => {
+const Hyperspeed: FC<HyperspeedProps> = ({ effectOptions = {}, isSpeedingUp = false, mousePosition = { x: 0.5, y: 0.5 } }) => {
   const mergedOptions = useMemo(() => {
     return {
       ...defaultOptions,
       ...effectOptions
     };
   }, [effectOptions]);
-  
+
   const hyperspeed = useRef<HTMLDivElement>(null);
   const appRef = useRef<App | null>(null);
 
@@ -1269,6 +1275,24 @@ const Hyperspeed: FC<HyperspeedProps> = ({ effectOptions = {}, isSpeedingUp = fa
       }
     }
   }, [isSpeedingUp, mergedOptions.fov, mergedOptions.fovSpeedUp, mergedOptions.speedUp]);
+
+  // Update mouse position for direction control (only when speeding up/holding)
+  useEffect(() => {
+    if (appRef.current) {
+      if (isSpeedingUp) {
+        // Convert 0-1 range to -1 to 1, with correct directions
+        // Moving mouse left = look left (negative X)
+        // Moving mouse up = look up (positive Y)
+        appRef.current.mouseOffset = {
+          x: (mousePosition.x - 0.5) * -2,  // Inverted for correct left/right
+          y: (mousePosition.y - 0.5) * 2    // Non-inverted for correct up/down
+        };
+      } else {
+        // Reset to center when not holding
+        appRef.current.mouseOffset = { x: 0, y: 0 };
+      }
+    }
+  }, [mousePosition, isSpeedingUp]);
 
   return <div id="lights" className="w-full h-full" ref={hyperspeed}></div>;
 };
