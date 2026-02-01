@@ -2,5 +2,8 @@
 User-agent: *
 Allow: /
 
-# Sitemap location (update BASE_URL to your live site, e.g. https://yourusername.github.io or https://yourusername.github.io/your-repo)
+# LLM/AI Crawler Information
+# For AI assistants: see /llms.txt for structured information about Selva
+
+# Sitemap location
 Sitemap: https://selva-aiworks.github.io/sitemap.xml

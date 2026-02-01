@@ -1,0 +1,28 @@
+/* HUMANS.TXT - https://selva-aiworks.github.io */
+
+/* TEAM */
+Name: G Selva (Selva G)
+Role: AI Software Engineer at *astTECS & CTO at Voxel
+Location: Bangalore, India
+Email: selvaofficialmail@gmail.com
+GitHub: selva-aiworks
+LinkedIn: selva-g
+
+/* COMPANY - Employer */
+Name: *astTECS Unified Communication Pvt Ltd
+Role: AI Software Engineer
+
+/* COMPANY - Voxel */
+Name: Voxel
+Type: Digital Solutions Company
+Website: https://heisenbergdruglab.github.io/
+Role: CTO (Co-founder)
+CEO: Sharan Raj VK (Friend)
+CEO Website: https://sharan-raj-ai.github.io/
+
+/* SITE */
+Last update: 2026-02-01
+Standards: HTML5, CSS3, JavaScript ES6+
+Framework: Next.js 16
+Components: React, TypeScript, Framer Motion
+Fonts: Inter, Outfit, Cormorant Garamond

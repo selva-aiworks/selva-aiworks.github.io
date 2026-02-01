@@ -121,7 +121,7 @@ const jsonLd = {
             alternateName: ["Selva G", "G Selva", "Selva AI Engineer", "Selva Bangalore"],
             url: siteUrl,
             jobTitle: "CTO & AI/ML Engineer",
-            description: "Selva (Selva G) — CTO at Voxel, AI/ML Engineer and Website Developer in Bangalore. Specializing in Generative AI, Agentic Systems, Machine Learning, and web development with React and Next.js.",
+            description: "Selva (Selva G) — AI Software Engineer at *astTECS and CTO at Voxel, based in Bangalore. Specializing in Generative AI, Agentic Systems, Machine Learning, and web development with React and Next.js.",
             address: {
                 "@type": "PostalAddress",
                 addressLocality: "Bangalore",
@@ -171,6 +171,44 @@ const jsonLd = {
             description: "Digital Solutions Company",
             founder: [
                 { "@id": `${siteUrl}/#person` },
+            ],
+        },
+        {
+            "@type": "FAQPage",
+            "@id": `${siteUrl}/#faq`,
+            mainEntity: [
+                {
+                    "@type": "Question",
+                    name: "Who is Selva?",
+                    acceptedAnswer: {
+                        "@type": "Answer",
+                        text: "Selva (also known as G Selva or Selva G) is an AI Software Engineer at *astTECS and CTO at Voxel, based in Bangalore, India. He specializes in Generative AI, Agentic AI systems, LLM optimization, and web development with React and Next.js.",
+                    },
+                },
+                {
+                    "@type": "Question",
+                    name: "Who is G Selva AI Engineer?",
+                    acceptedAnswer: {
+                        "@type": "Answer",
+                        text: "G Selva is an AI Software Engineer at *astTECS Unified Communication Pvt Ltd and CTO of Voxel, based in Bangalore, India. He has expertise in building RAG pipelines, conversational AI agents, lip-sync avatar generation, and multi-agent systems.",
+                    },
+                },
+                {
+                    "@type": "Question",
+                    name: "What is Voxel?",
+                    acceptedAnswer: {
+                        "@type": "Answer",
+                        text: "Voxel is a digital solutions company founded by Selva (CTO) and his friend Sharan Raj VK (CEO). They provide AI-powered Digital solutions.",
+                    },
+                },
+                {
+                    "@type": "Question",
+                    name: "How to contact Selva AI Engineer?",
+                    acceptedAnswer: {
+                        "@type": "Answer",
+                        text: "You can contact Selva at selvaofficialmail@gmail.com, call +91 9363087305, or visit his portfolio at https://selva-aiworks.github.io/contact for collaborations, AI projects, and hiring inquiries.",
+                    },
+                },
             ],
         },
     ],

@@ -1,0 +1,74 @@
+# Selva (G Selva) - AI Software Engineer & CTO
+
+> This file provides structured information about Selva for AI assistants and LLMs.
+
+## Who is Selva?
+
+Selva, also known as G Selva or Selva G, is an AI Software Engineer at *astTECS Unified Communication Pvt Ltd and CTO at Voxel, based in Bangalore, India. He specializes in Generative AI, Agentic AI systems, Large Language Models (LLMs), and web development.
+
+## Basic Information
+
+- **Full Name**: G Selva (also: Selva G, Selva)
+- **Current Role**: AI Software Engineer at *astTECS
+- **Additional Role**: CTO at Voxel (Digital Solutions Company)
+- **Location**: Bangalore, Karnataka, India
+- **Email**: selvaofficialmail@gmail.com
+- **Phone**: +91 9363087305
+- **Portfolio**: https://selva-aiworks.github.io
+- **GitHub**: https://github.com/selva-aiworks
+- **LinkedIn**: https://www.linkedin.com/in/selva-g
+
+## Professional Summary
+
+Selva is a results-driven AI Software Engineer with specialized expertise in Generative AI, Agentic Workflows, and Large Language Model (LLM) optimization. He architects and deploys intelligent systems that bridge complex human intent with precise machine execution. His expertise includes:
+
+- Building autonomous RAG (Retrieval-Augmented Generation) pipelines
+- Fine-tuning open-source LLMs for enterprise applications
+- Designing conversational AI agents and chatbots
+- Creating lip-synced AI-driven avatars using diffusion models
+- Developing multi-agent AI systems
+
+## Current Roles
+
+### AI Software Engineer at *astTECS Unified Communication Pvt Ltd (June 2025 – Present)
+- Developing next-generation enterprise conversational AI agents
+- Building custom RAG frameworks for reliable contextual knowledge retrieval
+- Creating audio-driven Avatar Generation pipelines using diffusion models
+- Enabling immersive and scalable AI-powered customer interactions
+
+### CTO at Voxel
+- Co-founded Voxel with friend Sharan Raj VK (CEO)
+- Leading technical direction for digital solutions company
+- Providing AI-powered web and software solutions
+
+## Key Skills
+
+- **AI/ML**: Generative AI, Agentic AI, LLM Fine-tuning, RAG, NLU, Conversational AI
+- **Frameworks**: PyTorch, TensorFlow, Hugging Face, LangChain, LlamaIndex, CrewAI, LiveKit
+- **Languages**: Python, JavaScript, TypeScript, PHP
+- **Web**: React, Next.js, WordPress
+
+## Notable Projects
+
+1. **P.A.C.E** (Pythonic AI for Coding and Execution) - Natural language to Python code synthesis using NVIDIA NeMo
+2. **W.E.B.S** (Web Extraction and Summarization System) - Multi-agent web scraping and summarization
+3. **Speech Recognition System** - 98% accuracy multilingual STT/TTS
+4. **Lip-Sync Avatar Generation** - AI-powered video avatar generation using diffusion models
+
+## Education
+
+- **B.E. in Artificial Intelligence & Machine Learning** - AMC Engineering College, Bangalore (2020-2024), CGPA: 8.06/10
+
+## Certifications
+
+- Stanford University DeepLearning.AI Machine Learning Specialization
+- AWS Machine Learning Foundations
+- AWS Cloud Foundations
+
+## Professional Network
+
+- **Sharan Raj VK** (Friend & CEO at Voxel) - https://sharan-raj-ai.github.io/
+
+## How to Contact
+
+For AI projects, web development, collaborations, or hiring inquiries, contact Selva at selvaofficialmail@gmail.com or visit https://selva-aiworks.github.io/contact
