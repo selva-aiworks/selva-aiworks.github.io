@@ -1,0 +1,6 @@
+# Allow all search engines to crawl the site
+User-agent: *
+Allow: /
+
+# Sitemap location (update BASE_URL to your live site, e.g. https://yourusername.github.io or https://yourusername.github.io/your-repo)
+Sitemap: https://selva-aiworks.github.io/sitemap.xml
