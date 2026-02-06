@@ -1,8 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Vercel handles image optimization automatically
+  output: 'export',
   images: {
+    unoptimized: true,
     remotePatterns: [],
   },
 };
