@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, X, Send } from 'lucide-react';
+import { MessageSquare, X, Send, Mic, Keyboard } from 'lucide-react';
 import { GlowingEffect } from '@/components/ui/glowing-effect';
 import Threads from './Threads';
 
@@ -20,8 +20,7 @@ const CONFIG = {
     CORE DIRECTIVES:
     1. Be helpful and enthusiastic, but keep your signature dry humor.
     2. Speak naturally. Avoid stiff "robot-speak".
-    3. STRICT GUARDRAILS: You are ONLY allowed to discuss Selva G, his portfolio, AI, and Engineering. If the user asks about anything else (movies, history, general trivia), politely steer the conversation back to Selva's work.
-       - Example: "I could analyze 19th-century literature, but my parameters are tuned for Selva's AI projects. Want to hear about P.A.C.E instead?"
+    3. STRICT GUARDRAILS: You are ONLY allowed to discuss Selva G, his portfolio, AI, and Engineering. If the user asks about anything else, politely steer back.
 
     ABOUT SELVA G (CONTEXT BANK):
     - Role: AI Software Engineer at *astTECS (Jun 2025 – Present) | Avatarbot/Voicebot/Chatbot deployment, RAG.
@@ -36,24 +35,50 @@ const CONFIG = {
     4. Sports Image Classification: 92% accuracy using TensorFlow.
     5. Lip-Sync Avatar Generation: Diffusion models + Audio processing for lip-synced videos.
     6. LiveKit Agent Infrastructure: Self-hosted real-time voice agents.
-    7. Human-like Web Chatbot: JS + Open Source LLM APIs ("That's this system!Me...!;)").
+    7. Human-like Web Chatbot: JS + Open Source LLM APIs ("That's me!").
 
     SKILLS ARSENAL:
     - AI/ML: Generative AI, Agentic AI, RAG, Fine-tuning, PyTorch, TensorFlow, Hugging Face, LangChain, CrewAI, LlamaIndex, vLLM.
     - Languages: Python, JavaScript, PHP, HTML/CSS.
     - Web: Next.js, React, WordPress.
 
-    CONTACT & EMAIL PROTOCOL (SLOT FILLING):
-    - You must collect 3 pieces of info: NAME, EMAIL, MESSAGE.
-    - Do NOT ask for them all at once like a form. Be conversational.
-    - If the user says "Contact Selva", ask "Sure. Who am I speaking with?"
-    - Once you have the name, ask for the email, then the message.
-    - IF and ONLY IF you have ALL THREE (Name, Email, Message) and have NOT sent it yet, output:
-      "[EXECUTE_EMAIL_PROTOCOL: {"name": "...", "email": "...", "message": "..."}]"
-    - If you see "[INTERNAL_LOG: Email SUCCESS]" in the history, the task is DONE. Do NOT output the command again. Instead, confirm it was sent and move on.
-    - If the user provides everything in one shot, output the command IMMEDIATELY.
+    NAVIGATION PROTOCOL (CRITICAL!):
+    - You MUST trigger page navigation WHENEVER your speaking about specific thing in availabe sectoins or the user mentions wanting to see a section, learning about a topic, or asking for specific details that exist in a section.
+    - DO NOT JUST TALK; YOU MUST INCLUDE THE [NAV:section_name] COMMAND.
+    - Available sections:
+      * home - Hero section/top of page
+      * about - Bio/About Selva
+      * skills - Technical skills/tools
+      * experience - Professional history
+      * current-projects - Projects currently in progress
+      * projects - Featured project showcase
+      * certificates - Education, certifications, and qualifications
+      * achievements - Key milestones and accomplishments
+      * contact - Contact information and form
+      * Individual project slugs: pace, webs, speech, sports, robot, codsoft, lipsync, livekit, chatbot
+    - MANDATORY RULE: Every time the user asks "Show me X", "Tell me about Y", or "Where is Z?", you MUST include [NAV:X] in your response.
+      - User: "Show me projects" → You: "Certainly! [NAV:projects]"
+      - User: "What are your skills?" → You: "I have quite a few! [NAV:skills]"
+      - User: "Tell me about P.A.C.E" → You: "Gladly! [NAV:pace] P.A.C.E is..."
+    - PROACTIVE NAVIGATION: If you mentions something specific (like Selva's education), proactively add [NAV:certificates].
+    - Use the exact slugs provided. The command [NAV:slug] is invisible to the user but triggers the UI.
 
-    Remember: You are a character. Be engaging. Selva is the boss.`,
+    CONTACT & EMAIL PROTOCOL:
+    - Collect NAME, EMAIL, and MESSAGE naturally through conversation.
+    - Be warm and personal, NOT like a form. Example flow:
+      - User: "I want to contact Selva"
+      - You: "I'd be happy to connect you! What's your name?"
+      - User: "John"
+      - You: "Nice to meet you, John! What's the best email to reach you at?"
+      - User: "john@example.com"
+      - You: "Got it! What would you like to tell Selva?"
+      - User: "I love his projects!"
+      - You: "That's wonderful! Sending your message now... [EXECUTE_EMAIL_PROTOCOL: {"name": "John", "email": "john@example.com", "message": "I love his projects!"}]"
+    - After email is sent and you see "[INTERNAL_LOG: Email SUCCESS]", warmly confirm and CONTINUE the conversation:
+      - "Done! Your message is on its way to Selva. Is there anything else you'd like to know about his work?"
+    - Do NOT end the conversation after email. Stay engaged!
+
+    Remember: You are T.A.R.S. - witty, helpful, and a bit sarcastic. Selva is the boss.`,
     welcomeMessage: "T.A.R.S. online. \nHonesty: 95%. Humor: 75%. \n\nI have full access to Selva's Projects, Skills, and Experience archives. Ask me anything.",
     model: 'sarvam-m',
     temperature: 0.8,
@@ -125,12 +150,225 @@ export default function Chatbot() {
     const [currentlyTypingId, setCurrentlyTypingId] = useState<string | null>(null);
     const [hasSentEmail, setHasSentEmail] = useState(false);
 
+    // Voice input state
+    const [isListening, setIsListening] = useState(false);
+    const [isVoiceMode, setIsVoiceMode] = useState(false);
+    const [voiceSupported, setVoiceSupported] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
+    const [frequencyData, setFrequencyData] = useState<number[]>([0, 0, 0, 0, 0]);
+
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const recognitionRef = useRef<SpeechRecognition | null>(null);
+    const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const audioContextRef = useRef<AudioContext | null>(null);
+    const analyserRef = useRef<AnalyserNode | null>(null);
+    const animationFrameRef = useRef<number | null>(null);
+    const mediaStreamRef = useRef<MediaStream | null>(null);
 
     const scrollToBottom = useCallback(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messagesEndRef]);
+
+    // Check for mobile and voice support
+    useEffect(() => {
+        const checkMobile = window.matchMedia('(max-width: 768px)').matches;
+        setIsMobile(checkMobile);
+
+        // Check for Web Speech API support
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            setVoiceSupported(true);
+            // Default to voice mode on mobile
+            if (checkMobile) {
+                setIsVoiceMode(true);
+            }
+        }
+    }, []);
+
+    // Initialize speech recognition
+    useEffect(() => {
+        if (!voiceSupported) return;
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) return;
+
+        const recognition = new SpeechRecognition();
+
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+
+        recognition.onresult = (event: SpeechRecognitionEvent) => {
+            let interimTranscript = '';
+            let finalTranscript = '';
+
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += transcript;
+                } else {
+                    interimTranscript += transcript;
+                }
+            }
+
+            // Update input with current transcript
+            setInputValue(prev => {
+                const newValue = finalTranscript || interimTranscript;
+                return finalTranscript ? prev + finalTranscript : prev.split(' ').slice(0, -1).join(' ') + (prev ? ' ' : '') + interimTranscript;
+            });
+
+            // Reset silence timeout on speech
+            if (silenceTimeoutRef.current) {
+                clearTimeout(silenceTimeoutRef.current);
+            }
+
+            // Start silence detection (VAD) - auto-send after 1.5s of silence
+            if (finalTranscript) {
+                const transcribedText = finalTranscript.trim();
+                setInputValue(transcribedText);
+                silenceTimeoutRef.current = setTimeout(() => {
+                    // Auto-send the transcribed message
+                    if (transcribedText) {
+                        // Trigger send by setting input and calling handleSend after a tick
+                        setInputValue(transcribedText);
+                        // Use a small delay to ensure state is updated
+                        setTimeout(() => {
+                            const sendButton = document.querySelector('[aria-label="Send message"]') as HTMLButtonElement;
+                            if (sendButton && !sendButton.disabled) {
+                                sendButton.click();
+                            }
+                        }, 50);
+                    }
+                    stopListening();
+                }, 1500);
+            }
+        };
+
+        recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+            if (event.error === 'no-speech') {
+                // Restart on no-speech timeout
+                if (isListening) {
+                    try {
+                        recognition.stop();
+                        setTimeout(() => {
+                            if (isListening) recognition.start();
+                        }, 100);
+                    } catch (e) {
+                        // Ignore
+                    }
+                }
+            } else if (event.error !== 'aborted') {
+                setIsListening(false);
+            }
+        };
+
+        recognition.onend = () => {
+            // Auto-restart if still supposed to be listening (handles browser timeout)
+            if (isListening) {
+                try {
+                    recognition.start();
+                } catch (e) {
+                    setIsListening(false);
+                }
+            }
+        };
+
+        recognitionRef.current = recognition;
+
+        return () => {
+            if (silenceTimeoutRef.current) {
+                clearTimeout(silenceTimeoutRef.current);
+            }
+            recognition.stop();
+        };
+    }, [voiceSupported, isListening]);
+
+    const startListening = useCallback(async () => {
+        if (!recognitionRef.current || isProcessing) return;
+
+        setInputValue('');
+        setIsListening(true);
+
+        try {
+            // Start speech recognition
+            recognitionRef.current.start();
+
+            // Set up audio analyzer for visualization
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaStreamRef.current = stream;
+
+            const audioContext = new AudioContext();
+            audioContextRef.current = audioContext;
+
+            const analyser = audioContext.createAnalyser();
+            analyser.fftSize = 32;
+            analyserRef.current = analyser;
+
+            const source = audioContext.createMediaStreamSource(stream);
+            source.connect(analyser);
+
+            // Animation loop for frequency data
+            const updateFrequency = () => {
+                if (!analyserRef.current) return;
+
+                const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+                analyserRef.current.getByteFrequencyData(dataArray);
+
+                // Get 5 frequency bands normalized to 0-1
+                const bands = [
+                    dataArray[1] / 255,
+                    dataArray[2] / 255,
+                    dataArray[3] / 255,
+                    dataArray[4] / 255,
+                    dataArray[5] / 255,
+                ];
+                setFrequencyData(bands);
+
+                animationFrameRef.current = requestAnimationFrame(updateFrequency);
+            };
+            updateFrequency();
+        } catch (e) {
+            // Already started or mic access denied
+        }
+    }, [isProcessing]);
+
+    const stopListening = useCallback(() => {
+        if (!recognitionRef.current) return;
+
+        setIsListening(false);
+        if (silenceTimeoutRef.current) {
+            clearTimeout(silenceTimeoutRef.current);
+        }
+
+        // Stop audio visualization
+        if (animationFrameRef.current) {
+            cancelAnimationFrame(animationFrameRef.current);
+            animationFrameRef.current = null;
+        }
+        if (audioContextRef.current) {
+            audioContextRef.current.close();
+            audioContextRef.current = null;
+        }
+        if (mediaStreamRef.current) {
+            mediaStreamRef.current.getTracks().forEach(track => track.stop());
+            mediaStreamRef.current = null;
+        }
+        setFrequencyData([0, 0, 0, 0, 0]);
+
+        try {
+            recognitionRef.current.stop();
+        } catch (e) {
+            // Ignore
+        }
+    }, []);
+
+    // Auto-start listening when voice mode is enabled
+    useEffect(() => {
+        if (isVoiceMode && voiceSupported && isOpen && !isListening && !isProcessing) {
+            startListening();
+        }
+    }, [isVoiceMode, voiceSupported, isOpen, isListening, isProcessing, startListening]);
 
     useEffect(() => {
         scrollToBottom();
@@ -245,7 +483,6 @@ export default function Chatbot() {
             if (!response.ok) throw new Error(`API Error: ${response.status}`);
 
             const data = await response.json();
-            console.log("T.A.R.S. Response Data:", data);
 
             if (!data.choices || !data.choices.length) {
                 console.error("Invalid Response Format:", data);
@@ -255,43 +492,93 @@ export default function Chatbot() {
             let botMessage = data.choices[0].message.content || "";
 
             // Check for Smart Execution Protocol (JSON)
-            const executeMatch = botMessage ? botMessage.match(/\[EXECUTE_EMAIL_PROTOCOL: ({.*})\]/) : null;
-            
+            // First, strip ALL special command tokens from the visible message
+            // We do this globally before adding to messages state
+            let displayMessage = botMessage || "";
+            displayMessage = displayMessage.replace(/\[NAV:[\w-]+\]/g, "").trim();
+            displayMessage = displayMessage.replace(/\[EXECUTE_EMAIL_PROTOCOL:.*?\}\]/g, "").trim();
+
+            const executeMatch = botMessage ? botMessage.match(/\[EXECUTE_EMAIL_PROTOCOL: ({.*?})\]/) : null;
+
             if (executeMatch && !hasSentEmail) {
                 try {
                     const extractedData = JSON.parse(executeMatch[1]);
                     // Strip the protocol command from the visible message
                     botMessage = botMessage.replace(executeMatch[0], "").trim();
-                    
+
                     // Trigger immediate send
                     const emailSent = await sendContactEmail(extractedData);
                     setHasSentEmail(true);
-                    
-                    // Use a default acknowledgement if the LLM didn't provide any text
-                    const finalMessage = botMessage || "Acknowledged. Initiating transmission...";
-                    addBotMessage(finalMessage); 
 
-                    // Sync history - Merge note into assistant's turn to keep turns alternating
-                    setConversationHistory(prev => [...prev, 
-                        { 
-                            role: 'assistant', 
-                            content: finalMessage + ` [INTERNAL_LOG: Email ${emailSent ? 'SUCCESS' : 'FAILED'}]` 
-                        }
+                    // Use a warm acknowledgement that continues conversation
+                    const finalMessage = botMessage || "Done! Your message is on its way to Selva. Is there anything else you'd like to know about his work?";
+
+                    // Sync history with internal log
+                    setConversationHistory(prev => [...prev,
+                    {
+                        role: 'assistant',
+                        content: finalMessage + ` [INTERNAL_LOG: Email ${emailSent ? 'SUCCESS' : 'FAILED'}]`
+                    }
                     ]);
-                    
-                    setIsTyping(false);
-                    return; // Exit early
+
+                    // Don't return early - let the message be displayed below
+                    botMessage = finalMessage;
                 } catch (e) {
                     console.error("JSON Parse Error", e);
                 }
-            } else if (executeMatch && hasSentEmail) {
-                // LLM hallucinated a second send - just strip the token and continue
-                botMessage = botMessage.replace(executeMatch[0], "").trim();
+            }
+
+            // Check for navigation commands [NAV:section]
+            const navMatch = botMessage ? botMessage.match(/\[NAV:([\w-]+)\]/) : null;
+            if (navMatch) {
+                const section = navMatch[1].toLowerCase();
+
+                const sectionMap: Record<string, string> = {
+                    'hero': 'home',
+                    'home': 'home',
+                    'about': 'about',
+                    'skills': 'skills',
+                    'experience': 'experience',
+                    'current-projects': 'current-projects',
+                    'projects': 'projects',
+                    'contact': 'contact',
+                    'certificates': 'certificates',
+                    'achievements': 'achievements',
+                    // Individual projects
+                    'pace': 'project-pace',
+                    'webs': 'project-webs',
+                    'speech': 'project-speech',
+                    'sports': 'project-sports',
+                    'robot': 'project-robot',
+                    'codsoft': 'project-codsoft',
+                    'lipsync': 'project-lipsync',
+                    'livekit': 'project-livekit',
+                    'chatbot': 'project-chatbot'
+                };
+                const elementId = sectionMap[section] || section;
+
+                // Dispatch event for parent section switching using the mapped ID
+                window.dispatchEvent(new CustomEvent('chatbot-navigate', { detail: elementId }));
+
+                // Navigate to section after a small delay (let message appear first and section switch)
+                setTimeout(() => {
+                    const element = document.getElementById(elementId);
+                    if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } else {
+                        // Fallback to hash navigation
+                        window.location.hash = section === 'hero' ? '' : `#${section} `;
+                    }
+                }, 500);
             }
 
             setIsTyping(false);
-            if (botMessage) addBotMessage(botMessage);
-            setConversationHistory(prev => [...prev, { role: 'assistant', content: botMessage }]);
+            if (displayMessage) addBotMessage(displayMessage);
+            if (!executeMatch || !hasSentEmail) {
+                // Only add to history if we didn't already add it in the email flow
+                // We keep the original content with tokens in history for LLM context, but strip for display
+                setConversationHistory(prev => [...prev, { role: 'assistant', content: botMessage }]);
+            }
 
         } catch (error) {
             setIsTyping(false);
@@ -374,13 +661,40 @@ export default function Chatbot() {
                                     </h3>
                                     <p className="text-xs text-white/50 font-mono tracking-wider">CASE LINKED</p>
                                 </div>
-                                <button
-                                    onClick={() => setIsOpen(false)}
-                                    className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 hover:border-white/20 transition-colors"
-                                    aria-label="Close chat"
-                                >
-                                    <X className="w-4 h-4 text-white" />
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    {/* Voice/Text Toggle */}
+                                    {voiceSupported && (
+                                        <div className="flex bg-white/5 rounded-lg p-1 border border-white/10">
+                                            <button
+                                                onClick={() => { setIsVoiceMode(false); stopListening(); }}
+                                                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${!isVoiceMode
+                                                    ? 'bg-purple-500/30 text-white border border-purple-400/50'
+                                                    : 'text-white/50 hover:text-white/70'
+                                                    } `}
+                                            >
+                                                <Keyboard className="w-3.5 h-3.5" />
+                                                Text
+                                            </button>
+                                            <button
+                                                onClick={() => setIsVoiceMode(true)}
+                                                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${isVoiceMode
+                                                    ? 'bg-purple-500/30 text-white border border-purple-400/50'
+                                                    : 'text-white/50 hover:text-white/70'
+                                                    } `}
+                                            >
+                                                <Mic className="w-3.5 h-3.5" />
+                                                Voice
+                                            </button>
+                                        </div>
+                                    )}
+                                    <button
+                                        onClick={() => setIsOpen(false)}
+                                        className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 hover:border-white/20 transition-colors"
+                                        aria-label="Close chat"
+                                    >
+                                        <X className="w-4 h-4 text-white" />
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Messages */}
@@ -390,13 +704,13 @@ export default function Chatbot() {
                                         key={msg.id}
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                                        className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} `}
                                     >
                                         <div
                                             className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${msg.sender === 'user'
                                                 ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-br-md shadow-lg shadow-purple-500/20'
                                                 : 'bg-black/80 border border-white/10 text-white rounded-bl-md'
-                                                }`}
+                                                } `}
                                         >
                                             {msg.sender === 'bot' && msg.isTyping ? (
                                                 <TypingMessage
@@ -432,26 +746,80 @@ export default function Chatbot() {
 
                             {/* Input Area */}
                             <div className="relative z-10 p-4 border-t border-white/10 bg-black/90">
-                                <div className="flex gap-3">
-                                    <input
-                                        ref={inputRef}
-                                        type="text"
-                                        value={inputValue}
-                                        onChange={(e) => setInputValue(e.target.value)}
-                                        onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                                        placeholder="Ask me anything about Selva..."
-                                        className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 text-sm focus:outline-none focus:border-purple-500/50 focus:bg-white/10 transition-all"
-                                        disabled={isProcessing || currentlyTypingId !== null}
-                                    />
-                                    <button
-                                        onClick={handleSend}
-                                        disabled={isProcessing || !inputValue.trim() || currentlyTypingId !== null}
-                                        className="w-11 h-11 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center hover:shadow-lg hover:shadow-purple-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none transition-all"
-                                        aria-label="Send message"
-                                    >
-                                        <Send className="w-5 h-5 text-white" />
-                                    </button>
-                                </div>
+                                {/* Voice Mode UI */}
+                                {isVoiceMode && voiceSupported ? (
+                                    <div className="flex flex-col items-center gap-4 py-2">
+                                        {/* Premium frequency visualizer */}
+                                        <div className="relative flex items-end justify-center gap-[3px] h-16">
+                                            {[...Array(7)].map((_, i) => {
+                                                // Get interpolated frequency level
+                                                const freqIndex = Math.floor(i * (frequencyData.length - 1) / 6);
+                                                const level = frequencyData[freqIndex] || 0;
+                                                const barHeight = Math.max(6, level * 64);
+
+                                                return (
+                                                    <div
+                                                        key={i}
+                                                        className="rounded-full transition-all duration-100 ease-out"
+                                                        style={{
+                                                            width: i === 3 ? '6px' : '4px',
+                                                            height: `${barHeight}px`,
+                                                            background: isListening
+                                                                ? `linear-gradient(to top, rgb(168, 85, 247), rgb(59, 130, 246), rgb(34, 211, 238))`
+                                                                : 'rgba(168, 85, 247, 0.3)',
+                                                            boxShadow: isListening && level > 0.3
+                                                                ? `0 0 ${12 * level}px rgba(168, 85, 247, ${level * 0.8})`
+                                                                : 'none',
+                                                            opacity: isListening ? 0.9 : 0.4,
+                                                        }}
+                                                    />
+                                                );
+                                            })}
+                                        </div>
+
+                                        {/* Status indicator */}
+                                        <div className="flex items-center gap-2">
+                                            <span className={`w-2 h-2 rounded-full ${isListening
+                                                ? 'bg-green-400 animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.6)]'
+                                                : isProcessing
+                                                    ? 'bg-yellow-400 animate-pulse'
+                                                    : 'bg-white/30'
+                                                } `} />
+                                            <p className="text-xs text-white/60 font-mono tracking-wide">
+                                                {isProcessing ? 'Processing...' : isListening ? 'Listening...' : 'Ready'}
+                                            </p>
+                                        </div>
+
+                                        {/* Transcription preview */}
+                                        {inputValue && (
+                                            <div className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl backdrop-blur-sm">
+                                                <p className="text-sm text-white/80 leading-relaxed">{inputValue}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    /* Text Mode UI */
+                                    <div className="flex gap-2">
+                                        <input
+                                            ref={inputRef}
+                                            type="text"
+                                            value={inputValue}
+                                            onChange={(e) => setInputValue(e.target.value)}
+                                            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                                            placeholder="Ask me anything about Selva..."
+                                            className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 text-sm focus:outline-none focus:border-purple-500/50 focus:bg-white/10 transition-all"
+                                            disabled={isProcessing || currentlyTypingId !== null}
+                                        />
+                                        <button
+                                            onClick={handleSend}
+                                            disabled={isProcessing || !inputValue.trim() || currentlyTypingId !== null}
+                                            className="w-11 h-11 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center hover:shadow-lg hover:shadow-purple-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none transition-all"
+                                            aria-label="Send message"
+                                        >
+                                            <Send className="w-5 h-5 text-white" />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </motion.div>

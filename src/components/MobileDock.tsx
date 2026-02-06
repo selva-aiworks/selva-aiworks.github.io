@@ -1,39 +1,40 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Home, Folder, Mail, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 
-export default function MobileDock() {
-    const pathname = usePathname();
+interface MobileDockProps {
+    activeSection?: string;
+    onNavigate?: (section: string) => void;
+}
 
+export default function MobileDock({ activeSection = 'home', onNavigate }: MobileDockProps) {
     const menuItems = [
         {
             icon: Home,
             label: 'Home',
-            href: '/',
+            section: 'home',
             isAction: false
         },
         {
             icon: Folder,
             label: 'Projects',
-            href: '/projects',
+            section: 'projects',
             isAction: false
         },
         {
             icon: Mail,
             label: 'Contact',
-            href: '/contact',
+            section: 'contact',
             isAction: false
         },
         {
             icon: MessageSquare,
             label: 'Chat',
-            href: '#',
+            section: 'chat',
             isAction: true,
             onClick: (e: React.MouseEvent) => {
                 e.preventDefault();
@@ -41,6 +42,12 @@ export default function MobileDock() {
             }
         }
     ];
+
+    const handleNavigation = (section: string) => {
+        if (onNavigate) {
+            onNavigate(section);
+        }
+    };
 
     return (
         <div className="md:hidden fixed bottom-8 left-0 right-0 px-6 z-50 flex justify-center pointer-events-none">
@@ -61,7 +68,7 @@ export default function MobileDock() {
                     {/* Content Layer */}
                     <div className="relative z-10 flex w-full justify-between items-center px-2">
                         {menuItems.map((item) => {
-                            const isActive = pathname === item.href;
+                            const isActive = activeSection === item.section;
                             const Icon = item.icon;
 
                             return (
@@ -77,8 +84,8 @@ export default function MobileDock() {
                                             <Icon className="w-6 h-6 text-white/90 group-hover:text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] transition-all ease-out" strokeWidth={1.5} />
                                         </button>
                                     ) : (
-                                        <Link
-                                            href={item.href}
+                                        <button
+                                            onClick={() => handleNavigation(item.section)}
                                             className={cn(
                                                 "relative flex items-center justify-center w-12 h-12 rounded-2xl transition-all duration-500",
                                                 isActive ? "bg-white/10 shadow-[inner_0_0_12px_rgba(255,255,255,0.1)]" : "hover:bg-white/5 active:scale-90"
@@ -98,7 +105,7 @@ export default function MobileDock() {
                                                     transition={{ type: "spring", stiffness: 300, damping: 25 }}
                                                 />
                                             )}
-                                        </Link>
+                                        </button>
                                     )}
                                 </React.Fragment>
                             );
@@ -109,3 +116,4 @@ export default function MobileDock() {
         </div>
     );
 }
+

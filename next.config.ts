@@ -1,14 +1,9 @@
 import type { NextConfig } from "next";
 
-// For project site (e.g. username.github.io/repo-name): set NEXT_PUBLIC_BASE_PATH=/repo-name in env
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
-
 const nextConfig: NextConfig = {
-  output: "export",
-  basePath: basePath || undefined,
-  assetPrefix: basePath ? `${basePath}/` : undefined,
+  // Vercel handles image optimization automatically
   images: {
-    unoptimized: true,
+    remotePatterns: [],
   },
 };
 

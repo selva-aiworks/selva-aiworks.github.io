@@ -6,8 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "deploy": "next build && node -e \"require('fs').writeFileSync('out/.nojekyll', '')\" && gh-pages -d out -t"
+    "lint": "eslint"
   },
   "dependencies": {
     "clsx": "^2.1.1",
@@ -33,7 +32,6 @@
     "@types/three": "^0.182.0",
     "eslint": "^9",
     "eslint-config-next": "16.0.6",
-    "gh-pages": "^6.3.0",
     "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "typescript": "^5"

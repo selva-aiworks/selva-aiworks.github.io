@@ -2,11 +2,9 @@ import type { Metadata } from "next";
 import { Inter, Outfit, Cormorant_Garamond, Share_Tech_Mono } from "next/font/google";
 import "./globals.css";
 import SplashCursor from "@/components/SplashCursor";
-import MobileDock from "@/components/MobileDock";
 import Chatbot from "@/components/Chatbot";
 import SoundManager from "@/components/SoundManager";
 import EasterEggManager from "@/components/EasterEggManager";
-import PageTransition from "@/components/PageTransition";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -77,7 +75,7 @@ export const metadata: Metadata = {
         siteName: "Selva Portfolio — AI Engineer Bangalore",
         images: [
             {
-                url: "/og-image.png",
+                url: "/og-image.webp",
                 width: 1200,
                 height: 630,
                 alt: "G Selva - AI/ML Engineer & CTO at Voxel - Bangalore",
@@ -88,7 +86,7 @@ export const metadata: Metadata = {
         card: "summary_large_image",
         title: "Selva | Selva G — AI Engineer & CTO at Voxel",
         description: "AI/ML Engineer & CTO at Voxel. Website Developer in Bangalore. Generative AI, Agentic Systems.",
-        images: ["/og-image.png"],
+        images: ["/og-image.webp"],
     },
     metadataBase: new URL("https://selva-aiworks.github.io"),
     alternates: { canonical: "https://selva-aiworks.github.io" },
@@ -232,7 +230,6 @@ export default function RootLayout({
                 <div className="relative">
                     {children}
                 </div>
-                <MobileDock />
                 <Chatbot />
             </body>
         </html>

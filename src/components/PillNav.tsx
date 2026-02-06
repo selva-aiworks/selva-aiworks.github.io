@@ -16,13 +16,15 @@ export interface PillNavProps {
     activeHref?: string;
     className?: string;
     ease?: string;
+    onNavigate?: (section: string) => void;
 }
 
 const PillNav: React.FC<PillNavProps> = ({
     items,
     activeHref,
     className = '',
-    ease = 'power3.easeOut'
+    ease = 'power3.easeOut',
+    onNavigate
 }) => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const circleRefs = useRef<Array<HTMLSpanElement | null>>([]);
@@ -171,16 +173,12 @@ const PillNav: React.FC<PillNavProps> = ({
     };
 
     const scrollToSection = (href: string, e: React.MouseEvent) => {
-        // If it's a page link (starts with /), let the browser handle it
-        if (href.startsWith('/')) {
-            return; // Don't prevent default, allow normal navigation
-        }
-
-        // Otherwise, it's a section link, handle smooth scroll
-        e.preventDefault();
-        const element = document.querySelector(href);
-        if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (href.startsWith('#')) {
+            e.preventDefault();
+            const section = href.slice(1);
+            if (onNavigate) {
+                onNavigate(section);
+            }
             setIsMobileMenuOpen(false);
         }
     };
