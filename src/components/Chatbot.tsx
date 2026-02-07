@@ -182,12 +182,16 @@ export default function Chatbot() {
         setIsMobile(checkMobile);
 
         // Check for Web Speech API support
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (SpeechRecognition) {
-            setVoiceSupported(true);
-            // Default to voice mode on mobile
-            if (checkMobile) {
-                setIsVoiceMode(true);
+        if (typeof window !== 'undefined') {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                setVoiceSupported(true);
+                // Default to voice mode on mobile ONLY if supported
+                if (checkMobile) {
+                    setIsVoiceMode(true);
+                }
+            } else {
+                setVoiceSupported(false);
             }
         }
     }, []);
@@ -251,15 +255,13 @@ export default function Chatbot() {
                 if (isListening) {
                     try {
                         recognition.stop();
-                        setTimeout(() => {
-                            if (isListening && !isRecognitionActiveRef.current) {
-                                recognition.start();
-                            }
-                        }, 100);
                     } catch (e) {
                         // Ignore
                     }
                 }
+            } else if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                setIsListening(false);
+                setVoiceSupported(false);
             } else if (event.error !== 'aborted') {
                 setIsListening(false);
             }
@@ -270,15 +272,20 @@ export default function Chatbot() {
             // Auto-restart if still supposed to be listening (handles browser timeout)
             // or if we just finished a turn and were waiting for onend to restart
             if (isListening || isInterTurnRef.current) {
-                isInterTurnRef.current = false;
                 // Only restart if we're not currently processing/typing
                 if (!isProcessing && !currentlyTypingId) {
-                    try {
-                        recognition.start();
-                    } catch (e) {
-                        // Ignore
-                    }
+                    // Mobile browsers need a breath between stop/start
+                    setTimeout(() => {
+                        if ((isListening || isInterTurnRef.current) && !isRecognitionActiveRef.current && !isProcessing && !currentlyTypingId) {
+                            try {
+                                recognition.start();
+                            } catch (e) {
+                                // Ignore
+                            }
+                        }
+                    }, 150);
                 }
+                isInterTurnRef.current = false;
             }
         };
 
