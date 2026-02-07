@@ -200,14 +200,20 @@ export default function Chatbot() {
         recognition.lang = 'en-US';
 
         recognition.onresult = (event: SpeechRecognitionEvent) => {
+            console.log('🎤 Speech recognition result received:', event);
+
             // Rebuild the full transcript from all results (interim + final)
             let fullTranscript = '';
             for (let i = 0; i < event.results.length; i++) {
                 fullTranscript += event.results[i][0].transcript;
+                console.log(`Result ${i}: "${event.results[i][0].transcript}" (final: ${event.results[i].isFinal})`);
             }
+
+            console.log('📝 Full transcript:', fullTranscript);
 
             // Update display in real-time
             setInputValue(fullTranscript);
+            console.log('✅ Set input value to:', fullTranscript);
 
             // Reset silence timeout on ANY speech activity
             if (silenceTimeoutRef.current) {
@@ -216,6 +222,7 @@ export default function Chatbot() {
 
             // Auto-send after 1.5s of silence
             silenceTimeoutRef.current = setTimeout(() => {
+                console.log('⏰ Silence timeout triggered, sending message...');
                 if (fullTranscript.trim()) {
                     handleSend();
                 }
@@ -224,7 +231,9 @@ export default function Chatbot() {
         };
 
         recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+            console.error('❌ Speech recognition error:', event.error, event);
             if (event.error === 'no-speech') {
+                console.log('🔄 No speech detected, restarting...');
                 // Restart on no-speech timeout
                 if (isListening) {
                     try {
@@ -233,10 +242,11 @@ export default function Chatbot() {
                             if (isListening) recognition.start();
                         }, 100);
                     } catch (e) {
-                        // Ignore
+                        console.error('Failed to restart:', e);
                     }
                 }
             } else if (event.error !== 'aborted') {
+                console.log('⚠️ Stopping recognition due to error');
                 setIsListening(false);
             }
         };
@@ -263,7 +273,11 @@ export default function Chatbot() {
     }, [voiceSupported, isListening]);
 
     const startListening = useCallback(async () => {
-        if (!recognitionRef.current || isProcessing) return;
+        console.log('🎙️ Starting voice recognition...');
+        if (!recognitionRef.current || isProcessing) {
+            console.warn('Cannot start: recognitionRef or isProcessing issue');
+            return;
+        }
 
         setInputValue('');
         setIsListening(true);
@@ -271,6 +285,7 @@ export default function Chatbot() {
         try {
             // Start speech recognition
             recognitionRef.current.start();
+            console.log('✅ Speech recognition started');
 
             // Set up audio analyzer for visualization
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
