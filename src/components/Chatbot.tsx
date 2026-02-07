@@ -169,6 +169,8 @@ export default function Chatbot() {
     const analyserRef = useRef<AnalyserNode | null>(null);
     const animationFrameRef = useRef<number | null>(null);
     const mediaStreamRef = useRef<MediaStream | null>(null);
+    const isRecognitionActiveRef = useRef(false);
+    const isInterTurnRef = useRef(false);
 
     const scrollToBottom = useCallback(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -203,21 +205,27 @@ export default function Chatbot() {
         recognition.interimResults = true;
         recognition.lang = 'en-US';
 
+        recognition.onstart = () => {
+            isRecognitionActiveRef.current = true;
+        };
+
         recognition.onresult = (event: SpeechRecognitionEvent) => {
-
-
             // Rebuild the full transcript from all results (interim + final)
             let fullTranscript = '';
             for (let i = 0; i < event.results.length; i++) {
                 fullTranscript += event.results[i][0].transcript;
-
             }
-
-
 
             // Update display in real-time
             setInputValue(fullTranscript);
 
+            // Handle interruption
+            if (currentlyTypingId) {
+                setMessages(prev => prev.map(msg =>
+                    msg.id === currentlyTypingId ? { ...msg, isTyping: false } : msg
+                ));
+                setCurrentlyTypingId(null);
+            }
 
             // Reset silence timeout on ANY speech activity
             if (silenceTimeoutRef.current) {
@@ -226,22 +234,27 @@ export default function Chatbot() {
 
             // Auto-send after 1s of silence
             silenceTimeoutRef.current = setTimeout(() => {
-
                 if (fullTranscript.trim()) {
+                    isInterTurnRef.current = true;
                     handleSend(fullTranscript);
                 }
-                stopListening();
+                try {
+                    recognition.stop();
+                } catch (e) {
+                    // Ignore
+                }
             }, 1000);
         };
 
         recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
             if (event.error === 'no-speech') {
-                // Restart on no-speech timeout
                 if (isListening) {
                     try {
                         recognition.stop();
                         setTimeout(() => {
-                            if (isListening) recognition.start();
+                            if (isListening && !isRecognitionActiveRef.current) {
+                                recognition.start();
+                            }
                         }, 100);
                     } catch (e) {
                         // Ignore
@@ -253,12 +266,18 @@ export default function Chatbot() {
         };
 
         recognition.onend = () => {
+            isRecognitionActiveRef.current = false;
             // Auto-restart if still supposed to be listening (handles browser timeout)
-            if (isListening) {
-                try {
-                    recognition.start();
-                } catch (e) {
-                    setIsListening(false);
+            // or if we just finished a turn and were waiting for onend to restart
+            if (isListening || isInterTurnRef.current) {
+                isInterTurnRef.current = false;
+                // Only restart if we're not currently processing/typing
+                if (!isProcessing && !currentlyTypingId) {
+                    try {
+                        recognition.start();
+                    } catch (e) {
+                        // Ignore
+                    }
                 }
             }
         };
@@ -271,7 +290,7 @@ export default function Chatbot() {
             }
             recognition.stop();
         };
-    }, [voiceSupported]);
+    }, [voiceSupported, isProcessing, currentlyTypingId]);
 
     const startListening = useCallback(async () => {
         if (!recognitionRef.current || isProcessing) {
@@ -282,55 +301,85 @@ export default function Chatbot() {
         setIsListening(true);
 
         try {
-            // Cancel any ongoing typing if interrupted by voice
-            if (currentlyTypingId) {
-                setMessages(prev => prev.map(msg =>
-                    msg.id === currentlyTypingId ? { ...msg, isTyping: false } : msg
-                ));
-                setCurrentlyTypingId(null);
+            if (!isRecognitionActiveRef.current) {
+                recognitionRef.current.start();
             }
-
-            // Start speech recognition
-            recognitionRef.current.start();
-
-            // Set up audio analyzer for visualization
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaStreamRef.current = stream;
-
-            const audioContext = new AudioContext();
-            audioContextRef.current = audioContext;
-
-            const analyser = audioContext.createAnalyser();
-            analyser.fftSize = 32;
-            analyserRef.current = analyser;
-
-            const source = audioContext.createMediaStreamSource(stream);
-            source.connect(analyser);
-
-            // Animation loop for frequency data
-            const updateFrequency = () => {
-                if (!analyserRef.current) return;
-
-                const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
-                analyserRef.current.getByteFrequencyData(dataArray);
-
-                // Get 5 frequency bands normalized to 0-1
-                const bands = [
-                    dataArray[1] / 255,
-                    dataArray[2] / 255,
-                    dataArray[3] / 255,
-                    dataArray[4] / 255,
-                    dataArray[5] / 255,
-                ];
-                setFrequencyData(bands);
-
-                animationFrameRef.current = requestAnimationFrame(updateFrequency);
-            };
-            updateFrequency();
         } catch (e) {
-            // Already started or mic access denied
+            // Ignore
         }
     }, [isProcessing]);
+
+    // Manage Audio Visualizer Lifecycle separately
+    useEffect(() => {
+        if (!isVoiceMode || !isOpen) {
+            // Cleanup audio when leaving voice mode or closing
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
+                animationFrameRef.current = null;
+            }
+            if (audioContextRef.current) {
+                audioContextRef.current.close().catch(() => { });
+                audioContextRef.current = null;
+            }
+            if (mediaStreamRef.current) {
+                mediaStreamRef.current.getTracks().forEach(track => track.stop());
+                mediaStreamRef.current = null;
+            }
+            setFrequencyData([0, 0, 0, 0, 0]);
+            return;
+        }
+
+        // Setup audio visualizer
+        let aborted = false;
+        const setupAudio = async () => {
+            try {
+                if (audioContextRef.current) return;
+
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                if (aborted) {
+                    stream.getTracks().forEach(track => track.stop());
+                    return;
+                }
+                mediaStreamRef.current = stream;
+
+                const audioContext = new AudioContext();
+                audioContextRef.current = audioContext;
+
+                const analyser = audioContext.createAnalyser();
+                analyser.fftSize = 32;
+                analyserRef.current = analyser;
+
+                const source = audioContext.createMediaStreamSource(stream);
+                source.connect(analyser);
+
+                const updateFrequency = () => {
+                    if (!analyserRef.current || aborted) return;
+
+                    const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+                    analyserRef.current.getByteFrequencyData(dataArray);
+
+                    const bands = [
+                        dataArray[1] / 255,
+                        dataArray[2] / 255,
+                        dataArray[3] / 255,
+                        dataArray[4] / 255,
+                        dataArray[5] / 255,
+                    ];
+                    setFrequencyData(bands);
+                    animationFrameRef.current = requestAnimationFrame(updateFrequency);
+                };
+                updateFrequency();
+            } catch (error) {
+                console.error("Audio visualizer setup failed:", error);
+            }
+        };
+
+        setupAudio();
+
+        return () => {
+            aborted = true;
+        };
+    }, [isVoiceMode, isOpen]);
 
     // Auto-resume voice recognition after bot finished speaking/typing
     useEffect(() => {
@@ -348,24 +397,10 @@ export default function Chatbot() {
         if (!recognitionRef.current) return;
 
         setIsListening(false);
+        isInterTurnRef.current = false;
         if (silenceTimeoutRef.current) {
             clearTimeout(silenceTimeoutRef.current);
         }
-
-        // Stop audio visualization
-        if (animationFrameRef.current) {
-            cancelAnimationFrame(animationFrameRef.current);
-            animationFrameRef.current = null;
-        }
-        if (audioContextRef.current) {
-            audioContextRef.current.close();
-            audioContextRef.current = null;
-        }
-        if (mediaStreamRef.current) {
-            mediaStreamRef.current.getTracks().forEach(track => track.stop());
-            mediaStreamRef.current = null;
-        }
-        setFrequencyData([0, 0, 0, 0, 0]);
 
         try {
             recognitionRef.current.stop();
