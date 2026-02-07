@@ -200,40 +200,38 @@ export default function Chatbot() {
         recognition.lang = 'en-US';
 
         recognition.onresult = (event: SpeechRecognitionEvent) => {
-            console.log('🎤 Speech recognition result received:', event);
+
 
             // Rebuild the full transcript from all results (interim + final)
             let fullTranscript = '';
             for (let i = 0; i < event.results.length; i++) {
                 fullTranscript += event.results[i][0].transcript;
-                console.log(`Result ${i}: "${event.results[i][0].transcript}" (final: ${event.results[i].isFinal})`);
+
             }
 
-            console.log('📝 Full transcript:', fullTranscript);
+
 
             // Update display in real-time
             setInputValue(fullTranscript);
-            console.log('✅ Set input value to:', fullTranscript);
+
 
             // Reset silence timeout on ANY speech activity
             if (silenceTimeoutRef.current) {
                 clearTimeout(silenceTimeoutRef.current);
             }
 
-            // Auto-send after 1.5s of silence
+            // Auto-send after 1s of silence
             silenceTimeoutRef.current = setTimeout(() => {
-                console.log('⏰ Silence timeout triggered, sending message...');
+
                 if (fullTranscript.trim()) {
-                    handleSend();
+                    handleSend(fullTranscript);
                 }
                 stopListening();
-            }, 1500);
+            }, 1000);
         };
 
         recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-            console.error('❌ Speech recognition error:', event.error, event);
             if (event.error === 'no-speech') {
-                console.log('🔄 No speech detected, restarting...');
                 // Restart on no-speech timeout
                 if (isListening) {
                     try {
@@ -242,11 +240,10 @@ export default function Chatbot() {
                             if (isListening) recognition.start();
                         }, 100);
                     } catch (e) {
-                        console.error('Failed to restart:', e);
+                        // Ignore
                     }
                 }
             } else if (event.error !== 'aborted') {
-                console.log('⚠️ Stopping recognition due to error');
                 setIsListening(false);
             }
         };
@@ -273,9 +270,7 @@ export default function Chatbot() {
     }, [voiceSupported]);
 
     const startListening = useCallback(async () => {
-        console.log('🎙️ Starting voice recognition...');
         if (!recognitionRef.current || isProcessing) {
-            console.warn('Cannot start: recognitionRef or isProcessing issue');
             return;
         }
 
@@ -285,7 +280,6 @@ export default function Chatbot() {
         try {
             // Start speech recognition
             recognitionRef.current.start();
-            console.log('✅ Speech recognition started');
 
             // Set up audio analyzer for visualization
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -325,6 +319,16 @@ export default function Chatbot() {
             // Already started or mic access denied
         }
     }, [isProcessing]);
+
+    // Auto-resume voice recognition after bot finished speaking/typing
+    useEffect(() => {
+        if (isVoiceMode && !isProcessing && !isListening && isOpen && !currentlyTypingId) {
+            const timer = setTimeout(() => {
+                startListening();
+            }, 500); // Small delay for better UX
+            return () => clearTimeout(timer);
+        }
+    }, [isVoiceMode, isProcessing, isListening, isOpen, currentlyTypingId, startListening]);
 
     const stopListening = useCallback(() => {
         if (!recognitionRef.current) return;
@@ -449,8 +453,8 @@ export default function Chatbot() {
         }]);
     };
 
-    const handleSend = async () => {
-        const userMessage = inputValue.trim();
+    const handleSend = async (manualText?: string) => {
+        const userMessage = (manualText || inputValue).trim();
         if (!userMessage || isProcessing) return;
 
         addUserMessage(userMessage);
@@ -566,6 +570,7 @@ export default function Chatbot() {
             }
 
             setIsTyping(false);
+            setIsProcessing(false);
             if (displayMessage) addBotMessage(displayMessage);
             if (!executeMatch || !hasSentEmail) {
                 // Only add to history if we didn't already add it in the email flow
@@ -575,6 +580,7 @@ export default function Chatbot() {
 
         } catch (error) {
             setIsTyping(false);
+            setIsProcessing(false);
             addBotMessage('Sorry, my communication module is glitching ("Unknown Error"). You can reach Selva at selvaofficialmail@gmail.com');
             console.error('Chatbot error:', error);
         }
@@ -784,9 +790,13 @@ export default function Chatbot() {
                                         </div>
 
                                         {/* Transcription preview */}
-                                        {inputValue && (
-                                            <div className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl backdrop-blur-sm">
-                                                <p className="text-sm text-white/80 leading-relaxed">{inputValue}</p>
+                                        {inputValue && isListening && (
+                                            <div className="w-full px-4 py-3 bg-purple-500/10 border border-purple-500/30 rounded-xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+                                                    <span className="text-[10px] uppercase tracking-widest text-purple-400 font-bold">Transcription</span>
+                                                </div>
+                                                <p className="text-sm text-white leading-relaxed font-medium">{inputValue}</p>
                                             </div>
                                         )}
                                     </div>
@@ -804,7 +814,7 @@ export default function Chatbot() {
                                             disabled={isProcessing || currentlyTypingId !== null}
                                         />
                                         <button
-                                            onClick={handleSend}
+                                            onClick={() => handleSend()}
                                             disabled={isProcessing || !inputValue.trim() || currentlyTypingId !== null}
                                             className="w-11 h-11 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center hover:shadow-lg hover:shadow-purple-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none transition-all"
                                             aria-label="Send message"
