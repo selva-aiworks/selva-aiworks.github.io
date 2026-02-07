@@ -205,7 +205,8 @@ export default function Chatbot() {
 
         const recognition = new SpeechRecognition();
 
-        recognition.continuous = true;
+        // Android Chrome works better with continuous=false (manual restart)
+        recognition.continuous = !isMobile;
         recognition.interimResults = true;
         recognition.lang = 'en-US';
 
@@ -274,7 +275,10 @@ export default function Chatbot() {
             if (isListening || isInterTurnRef.current) {
                 // Only restart if we're not currently processing/typing
                 if (!isProcessing && !currentlyTypingId) {
-                    // Mobile browsers need a breath between stop/start
+                    // Mobile browsers need a longer breath between stop/start
+                    // Android Chrome needs ~300ms+ to fully release the mic
+                    const restartDelay = isMobile ? 400 : 150;
+
                     setTimeout(() => {
                         if ((isListening || isInterTurnRef.current) && !isRecognitionActiveRef.current && !isProcessing && !currentlyTypingId) {
                             try {
@@ -283,7 +287,7 @@ export default function Chatbot() {
                                 // Ignore
                             }
                         }
-                    }, 150);
+                    }, restartDelay);
                 }
                 isInterTurnRef.current = false;
             }
@@ -517,7 +521,11 @@ export default function Chatbot() {
     };
 
     const handleSend = async (manualText?: string) => {
-        const userMessage = (manualText || inputValue).trim();
+        // Sanitize input: remove control characters and invisible unicode
+        let userMessage = (manualText || inputValue).trim();
+        // Remove control characters (ASCII 0-31 except newlines/tabs)
+        userMessage = userMessage.replace(/[\x00-\x09\x0B-\x1F\x7F]/g, "");
+
         if (!userMessage || isProcessing) return;
 
         addUserMessage(userMessage);
@@ -543,6 +551,11 @@ export default function Chatbot() {
             if (!response.ok) throw new Error(`API Error: ${response.status}`);
 
             const data = await response.json();
+
+            if (data.error) {
+                console.error("API returned error:", data.error);
+                throw new Error(data.error.message || 'API Error from backend');
+            }
 
             if (!data.choices || !data.choices.length) {
                 console.error("Invalid Response Format:", data);
