@@ -270,7 +270,7 @@ export default function Chatbot() {
             }
             recognition.stop();
         };
-    }, [voiceSupported, isListening]);
+    }, [voiceSupported]);
 
     const startListening = useCallback(async () => {
         console.log('🎙️ Starting voice recognition...');
