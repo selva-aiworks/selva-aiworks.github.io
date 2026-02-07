@@ -78,6 +78,10 @@ const CONFIG = {
       - "Done! Your message is on its way to Selva. Is there anything else you'd like to know about his work?"
     - Do NOT end the conversation after email. Stay engaged!
 
+    EXIT PROTOCOL:
+    - If the user says goodbye or indicates they are done chatting, you MUST include the command [CLOSE_CHAT] at the very end of your response.
+    - Example: "It was a pleasure chatting! See you later. [CLOSE_CHAT]"
+
     Remember: You are T.A.R.S. - witty, helpful, and a bit sarcastic. Selva is the boss.`,
     welcomeMessage: "T.A.R.S. online. \nHonesty: 95%. Humor: 75%. \n\nI have full access to Selva's Projects, Skills, and Experience archives. Ask me anything.",
     model: 'sarvam-m',
@@ -278,6 +282,14 @@ export default function Chatbot() {
         setIsListening(true);
 
         try {
+            // Cancel any ongoing typing if interrupted by voice
+            if (currentlyTypingId) {
+                setMessages(prev => prev.map(msg =>
+                    msg.id === currentlyTypingId ? { ...msg, isTyping: false } : msg
+                ));
+                setCurrentlyTypingId(null);
+            }
+
             // Start speech recognition
             recognitionRef.current.start();
 
@@ -330,6 +342,8 @@ export default function Chatbot() {
         }
     }, [isVoiceMode, isProcessing, isListening, isOpen, currentlyTypingId, startListening]);
 
+
+
     const stopListening = useCallback(() => {
         if (!recognitionRef.current) return;
 
@@ -359,6 +373,13 @@ export default function Chatbot() {
             // Ignore
         }
     }, []);
+
+    // Stop listening when UI is closed
+    useEffect(() => {
+        if (!isOpen && isListening) {
+            stopListening();
+        }
+    }, [isOpen, isListening, stopListening]);
 
     // Auto-start listening when voice mode is enabled
     useEffect(() => {
@@ -488,12 +509,23 @@ export default function Chatbot() {
 
             let botMessage = data.choices[0].message.content || "";
 
+            // Check for Goodbye/Close Protocol
+            const lowerBotMessage = botMessage.toLowerCase();
+            const goodbyePhrases = ["goodbye", "bye", "see you later", "see ya", "talk to you later", "take care"];
+            const isGoodbye = goodbyePhrases.some(phrase => lowerBotMessage.includes(phrase));
+
+            if (isGoodbye) {
+                // Prepend close protocol if it's a goodbye
+                botMessage += " [CLOSE_CHAT]";
+            }
+
             // Check for Smart Execution Protocol (JSON)
             // First, strip ALL special command tokens from the visible message
             // We do this globally before adding to messages state
             let displayMessage = botMessage || "";
             displayMessage = displayMessage.replace(/\[NAV:[\w-]+\]/g, "").trim();
             displayMessage = displayMessage.replace(/\[EXECUTE_EMAIL_PROTOCOL:.*?\}\]/g, "").trim();
+            displayMessage = displayMessage.replace(/\[CLOSE_CHAT\]/g, "").trim();
 
             const executeMatch = botMessage ? botMessage.match(/\[EXECUTE_EMAIL_PROTOCOL: ({.*?})\]/) : null;
 
@@ -567,6 +599,13 @@ export default function Chatbot() {
                         window.location.hash = section === 'hero' ? '' : `#${section} `;
                     }
                 }, 500);
+            }
+
+            // Check for Close Chat command
+            if (botMessage.includes("[CLOSE_CHAT]")) {
+                setTimeout(() => {
+                    setIsOpen(false);
+                }, 2000); // Leave message visible for 2s before closing
             }
 
             setIsTyping(false);
@@ -714,7 +753,7 @@ export default function Chatbot() {
                                             {msg.sender === 'bot' && msg.isTyping ? (
                                                 <TypingMessage
                                                     content={msg.content}
-                                                    speed={CONFIG.typingSpeed}
+                                                    speed={isVoiceMode ? 10 : (CONFIG.typingSpeed || 20)}
                                                     onComplete={() => handleTypingComplete(msg.id)}
                                                     onCharacterTyped={scrollToBottom}
                                                 />
