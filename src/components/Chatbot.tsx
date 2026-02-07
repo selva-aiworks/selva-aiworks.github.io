@@ -200,41 +200,27 @@ export default function Chatbot() {
         recognition.lang = 'en-US';
 
         recognition.onresult = (event: SpeechRecognitionEvent) => {
-            let interimTranscript = '';
-            let finalTranscript = '';
-
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                const transcript = event.results[i][0].transcript;
-                if (event.results[i].isFinal) {
-                    finalTranscript += transcript;
-                } else {
-                    interimTranscript += transcript;
-                }
+            // Rebuild the full transcript from all results (interim + final)
+            let fullTranscript = '';
+            for (let i = 0; i < event.results.length; i++) {
+                fullTranscript += event.results[i][0].transcript;
             }
 
-            // Update input with current transcript
-            setInputValue(prev => {
-                const newValue = finalTranscript || interimTranscript;
-                return finalTranscript ? prev + finalTranscript : prev.split(' ').slice(0, -1).join(' ') + (prev ? ' ' : '') + interimTranscript;
-            });
+            // Update display in real-time
+            setInputValue(fullTranscript);
 
-            // Reset silence timeout on speech
+            // Reset silence timeout on ANY speech activity
             if (silenceTimeoutRef.current) {
                 clearTimeout(silenceTimeoutRef.current);
             }
 
-            // Start silence detection (VAD) - auto-send after 1.5s of silence
-            if (finalTranscript) {
-                const transcribedText = finalTranscript.trim();
-                setInputValue(transcribedText);
-                silenceTimeoutRef.current = setTimeout(() => {
-                    // Auto-send the transcribed message by calling handleSend directly
-                    if (transcribedText && inputValue.trim()) {
-                        handleSend();
-                    }
-                    stopListening();
-                }, 1500);
-            }
+            // Auto-send after 1.5s of silence
+            silenceTimeoutRef.current = setTimeout(() => {
+                if (fullTranscript.trim()) {
+                    handleSend();
+                }
+                stopListening();
+            }, 1500);
         };
 
         recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
