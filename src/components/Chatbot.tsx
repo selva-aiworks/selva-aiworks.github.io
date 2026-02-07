@@ -228,17 +228,9 @@ export default function Chatbot() {
                 const transcribedText = finalTranscript.trim();
                 setInputValue(transcribedText);
                 silenceTimeoutRef.current = setTimeout(() => {
-                    // Auto-send the transcribed message
-                    if (transcribedText) {
-                        // Trigger send by setting input and calling handleSend after a tick
-                        setInputValue(transcribedText);
-                        // Use a small delay to ensure state is updated
-                        setTimeout(() => {
-                            const sendButton = document.querySelector('[aria-label="Send message"]') as HTMLButtonElement;
-                            if (sendButton && !sendButton.disabled) {
-                                sendButton.click();
-                            }
-                        }, 50);
+                    // Auto-send the transcribed message by calling handleSend directly
+                    if (transcribedText && inputValue.trim()) {
+                        handleSend();
                     }
                     stopListening();
                 }, 1500);
