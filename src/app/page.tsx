@@ -14,89 +14,10 @@ import { GlowingEffect } from '@/components/ui/glowing-effect';
 import MobileDock from '@/components/MobileDock';
 import ProjectsSection from '@/components/sections/ProjectsSection';
 import ContactSection from '@/components/sections/ContactSection';
+import { projects, currentlyWorkingProjects, skills, experience, siteConfig } from '@/data/portfolio';
 
-const projects = [
-  {
-    title: 'P.A.C.E',
-    subtitle: 'Pythonic AI for Coding and Execution',
-    description: 'Designed a system leveraging NVIDIA\'s NeMo API to generate Python code from natural language inputs. Streamlined workflows by converting human intentions into executable scripts.',
-    tags: ['NVIDIA NeMo', 'Python', 'AI Automation'],
-    link: '#'
-  },
-  {
-    title: 'W.E.B.S',
-    subtitle: 'Web Extraction and Summarization System',
-    description: 'Developed a system using AI agents from CrewAI to scrape web content, summarize it, and save results in PDF format. Implemented automation for efficient data extraction.',
-    tags: ['CrewAI', 'Web Scraping', 'Summarization'],
-    link: '#'
-  },
-  {
-    title: 'Speech Recognition System',
-    subtitle: 'Real-time Multilingual STT & TTS',
-    description: 'Built a real-time multilingual STT and TTS system with 98% word accuracy using GPT-2 and open-source libraries. Supports English, Spanish, and French.',
-    tags: ['GPT-2', 'NLP', 'STT/TTS'],
-    link: '#'
-  },
-  {
-    title: 'Sports Image Classification',
-    subtitle: '92% Accuracy Classification Model',
-    description: 'Engineered a Sports Classification System achieving 92% accuracy. Leveraged TensorFlow and Google Colab for model training, optimization, and deployment.',
-    tags: ['TensorFlow', 'Computer Vision', 'Deep Learning'],
-    link: '#'
-  }
-];
+// Data imported from @/data/portfolio.ts to ensure consistency with SEO metadata
 
-const currentlyWorkingProjects = [
-  {
-    slug: 'lipsync',
-    title: 'Lip-Sync Avatar Generation',
-    description: 'Generating lip-synced avatar videos from audio and source images/videos using open-source audio feature extractors and diffusion models.',
-    tags: ['Generative AI', 'Diffusion Models', 'Audio Processing', 'Open Source'],
-    image: '/projects/lipsync_avatar_stunning.webp'
-  },
-  {
-    slug: 'livekit',
-    title: 'LiveKit Agent Infrastructure',
-    description: 'Setting up a complete LiveKit agent with local STT, TTS, and LLM services, utilizing open-source models for a fully self-hosted solution.',
-    tags: ['LiveKit', 'Local LLM', 'STT/TTS', 'Agentic AI'],
-    image: '/projects/livekit_agent_stunning.webp'
-  },
-  {
-    slug: 'chatbot',
-    title: 'Human-like Web Chatbot',
-    description: 'Built a more human-like chatbot using JS and open-source LLM APIs, featuring seamless email integration for direct communication.',
-    tags: ['Chatbot', 'Email Integration', 'Open Source LLM', 'JavaScript'],
-    image: '/projects/web_chatbot_stunning.webp'
-  }
-];
-
-const skills = {
-  languages: ['Python', 'HTML', 'PHP', 'JavaScript'],
-  frameworks: ['Hugging Face', 'LangChain', 'CrewAI', 'PyTorch', 'LiveKit', 'TensorFlow', 'LlamaIndex', 'vLLM', 'Ollama', 'Rasa', 'Sentence-Transformers'],
-  specializations: ['Generative AI', 'Agentic AI', 'Conversational AI', 'RAG', 'Multimodal AI', 'Web Scraping', 'API Integrations'],
-  webDev: ['WordPress', 'CSS', 'React', 'Next.js', 'TSX']
-};
-
-const experience = [
-  {
-    role: 'AI Software Engineer',
-    company: '*astTECS Unified Communication Pvt Ltd',
-    period: 'Jun 2025 – Present',
-    description: 'Specializing in voicebot and chatbot deployment, Avatar generation, and building RAG bots. Actively experimenting with open-source LLMs and running them locally for optimized performance.'
-  },
-  {
-    role: 'AI Trainer',
-    company: 'Sambhav Foundation',
-    period: 'Dec 2024 – Jun 2025',
-    description: 'Led engaging, hands-on AI/ML training sessions for over 500 students, fostering a deep understanding of intelligent systems and practical implementation.'
-  },
-  {
-    role: 'Artificial Intelligence Intern',
-    company: 'CodSoft',
-    period: 'Aug 2023 – Sep 2023',
-    description: 'Completed an intensive internship, deploying AI-driven systems to improve efficiency. Gained hands-on experience in leveraging AI tools for impactful project delivery.'
-  }
-];
 
 export default function Home() {
   const [activeSection, setActiveSection] = React.useState<'home' | 'projects' | 'contact'>('home');

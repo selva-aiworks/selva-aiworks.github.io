@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Outfit, Cormorant_Garamond, Share_Tech_Mono } from "next/font/google";
+import { Inter, Outfit, Cormorant_Garamond, Share_Tech_Mono, Noto_Sans_Tamil, Noto_Sans_Devanagari } from "next/font/google";
 import "./globals.css";
 import SplashCursor from "@/components/SplashCursor";
 import Chatbot from "@/components/Chatbot";
@@ -24,6 +24,16 @@ const shareTechMono = Share_Tech_Mono({
     weight: '400',
     subsets: ["latin"],
     variable: '--font-share-tech-mono'
+});
+const notoTamil = Noto_Sans_Tamil({
+    weight: ['400', '500', '600'],
+    subsets: ["tamil"],
+    variable: '--font-noto-tamil'
+});
+const notoHindi = Noto_Sans_Devanagari({
+    weight: ['400', '500', '600'],
+    subsets: ["devanagari"],
+    variable: '--font-noto-hindi'
 });
 
 const siteName = "Selva";
@@ -107,19 +117,20 @@ export const metadata: Metadata = {
     },
 };
 
-const siteUrl = "https://selva-aiworks.github.io";
+import { siteConfig, projects, currentlyWorkingProjects } from "@/data/portfolio";
 
 const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
         {
             "@type": "Person",
-            "@id": `${siteUrl}/#person`,
-            name: "Selva",
-            alternateName: ["Selva G", "G Selva", "Selva AI Engineer", "Selva Bangalore"],
-            url: siteUrl,
-            jobTitle: "CTO & AI/ML Engineer",
-            description: "Selva (Selva G) — AI Software Engineer at *astTECS and CTO at Voxel, based in Bangalore. Specializing in Generative AI, Agentic Systems, Machine Learning, and web development with React and Next.js.",
+            "@id": `${siteConfig.url}/#person`,
+            name: siteConfig.author.name,
+            alternateName: siteConfig.author.alternateNames,
+            url: siteConfig.url,
+            jobTitle: siteConfig.author.role,
+            description: siteConfig.description,
+            email: siteConfig.author.email,
             address: {
                 "@type": "PostalAddress",
                 addressLocality: "Bangalore",
@@ -129,15 +140,13 @@ const jsonLd = {
             worksFor: {
                 "@type": "Organization",
                 name: "Voxel",
-                url: "https://heisenbergdruglab.github.io/",
+                url: siteConfig.author.socials.voxel,
                 description: "Digital Solutions Company",
             },
-            colleague: {
-                "@type": "Person",
-                name: "Sharan Raj VK",
-                url: "https://sharan-raj-ai.github.io/",
-                jobTitle: "CEO, Voxel",
-            },
+            sameAs: [
+                siteConfig.author.socials.github,
+                siteConfig.author.socials.linkedin,
+            ],
             knowsAbout: [
                 "Generative AI",
                 "Agentic AI",
@@ -148,32 +157,47 @@ const jsonLd = {
                 "Website Development",
                 "Digital Solutions",
             ],
-            sameAs: [
-                "https://github.com/selva-aiworks",
-                "https://www.linkedin.com/in/selva-g",
-            ],
         },
         {
             "@type": "WebSite",
-            "@id": `${siteUrl}/#website`,
-            url: siteUrl,
-            name: "Selva - Selva G | AI Engineer & CTO at Voxel - Bangalore",
-            description: "Portfolio of Selva (Selva G), CTO at Voxel, AI/ML Engineer and Website Developer in Bangalore. Projects in Generative AI, ML, and web development.",
-            publisher: { "@id": `${siteUrl}/#person` },
+            "@id": `${siteConfig.url}/#website`,
+            url: siteConfig.url,
+            name: siteConfig.title,
+            description: siteConfig.description,
+            publisher: { "@id": `${siteConfig.url}/#person` },
+            inLanguage: "en-US",
         },
         {
             "@type": "Organization",
-            "@id": `${siteUrl}/#voxel`,
+            "@id": `${siteConfig.url}/#voxel`,
             name: "Voxel",
-            url: "https://heisenbergdruglab.github.io/",
+            url: siteConfig.author.socials.voxel,
             description: "Digital Solutions Company",
             founder: [
-                { "@id": `${siteUrl}/#person` },
+                { "@id": `${siteConfig.url}/#person` },
             ],
         },
         {
+            "@type": "ItemList",
+            "@id": `${siteConfig.url}/#projects`,
+            name: "Key Projects",
+            description: "A selection of AI and engineering projects focused on Generative AI, Automation, and Web Development.",
+            itemListElement: [
+                ...projects,
+                ...currentlyWorkingProjects
+            ].map((project, index) => ({
+                "@type": "SoftwareSourceCode",
+                position: index + 1,
+                name: project.title,
+                description: project.description,
+                programmingLanguage: project.tags.join(", "),
+                author: { "@id": `${siteConfig.url}/#person` },
+                url: `${siteConfig.url}/#${project.title.toLowerCase().replace(/\s+/g, '-')}`
+            }))
+        },
+        {
             "@type": "FAQPage",
-            "@id": `${siteUrl}/#faq`,
+            "@id": `${siteConfig.url}/#faq`,
             mainEntity: [
                 {
                     "@type": "Question",
@@ -204,7 +228,7 @@ const jsonLd = {
                     name: "How to contact Selva AI Engineer?",
                     acceptedAnswer: {
                         "@type": "Answer",
-                        text: "You can contact Selva at selvaofficialmail@gmail.com, call +91 9363087305, or visit his portfolio at https://selva-aiworks.github.io/contact for collaborations, AI projects, and hiring inquiries.",
+                        text: `You can contact Selva at ${siteConfig.author.email}, or visit his portfolio at ${siteConfig.url} for collaborations, AI projects, and hiring inquiries.`,
                     },
                 },
             ],
@@ -219,7 +243,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <body className={`${outfit.className} ${inter.variable} ${cormorant.variable} ${shareTechMono.variable}`}>
+            <body className={`${outfit.className} ${inter.variable} ${cormorant.variable} ${shareTechMono.variable} ${notoTamil.variable} ${notoHindi.variable}`}>
                 <script
                     type="application/ld+json"
                     dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

@@ -8,7 +8,7 @@
 body {
     color: var(--foreground);
     background: var(--background);
-    font-family: var(--font-outfit), sans-serif;
+    font-family: var(--font-outfit), var(--font-noto-tamil), var(--font-noto-hindi), 'Noto Sans', system-ui, -apple-system, sans-serif;
     overflow-x: hidden;
 }
 
@@ -30,7 +30,9 @@ body {
     }
 }
 
-h1, h2, h3 {
+h1,
+h2,
+h3 {
     font-family: var(--font-cormorant), serif;
     letter-spacing: -0.01em;
 }
@@ -107,27 +109,89 @@ nextjs-portal {
 
 /* Glitch Animation Keyframes */
 @keyframes glitch {
-    0% { clip-path: inset(20% 0 50% 0); }
-    5% { clip-path: inset(10% 0 60% 0); }
-    10% { clip-path: inset(15% 0 55% 0); }
-    15% { clip-path: inset(25% 0 35% 0); }
-    20% { clip-path: inset(30% 0 40% 0); }
-    25% { clip-path: inset(40% 0 20% 0); }
-    30% { clip-path: inset(10% 0 60% 0); }
-    35% { clip-path: inset(15% 0 55% 0); }
-    40% { clip-path: inset(25% 0 35% 0); }
-    45% { clip-path: inset(30% 0 40% 0); }
-    50% { clip-path: inset(20% 0 50% 0); }
-    55% { clip-path: inset(10% 0 60% 0); }
-    60% { clip-path: inset(15% 0 55% 0); }
-    65% { clip-path: inset(25% 0 35% 0); }
-    70% { clip-path: inset(30% 0 40% 0); }
-    75% { clip-path: inset(40% 0 20% 0); }
-    80% { clip-path: inset(20% 0 50% 0); }
-    85% { clip-path: inset(10% 0 60% 0); }
-    90% { clip-path: inset(15% 0 55% 0); }
-    95% { clip-path: inset(25% 0 35% 0); }
-    100% { clip-path: inset(30% 0 40% 0); }
+    0% {
+        clip-path: inset(20% 0 50% 0);
+    }
+
+    5% {
+        clip-path: inset(10% 0 60% 0);
+    }
+
+    10% {
+        clip-path: inset(15% 0 55% 0);
+    }
+
+    15% {
+        clip-path: inset(25% 0 35% 0);
+    }
+
+    20% {
+        clip-path: inset(30% 0 40% 0);
+    }
+
+    25% {
+        clip-path: inset(40% 0 20% 0);
+    }
+
+    30% {
+        clip-path: inset(10% 0 60% 0);
+    }
+
+    35% {
+        clip-path: inset(15% 0 55% 0);
+    }
+
+    40% {
+        clip-path: inset(25% 0 35% 0);
+    }
+
+    45% {
+        clip-path: inset(30% 0 40% 0);
+    }
+
+    50% {
+        clip-path: inset(20% 0 50% 0);
+    }
+
+    55% {
+        clip-path: inset(10% 0 60% 0);
+    }
+
+    60% {
+        clip-path: inset(15% 0 55% 0);
+    }
+
+    65% {
+        clip-path: inset(25% 0 35% 0);
+    }
+
+    70% {
+        clip-path: inset(30% 0 40% 0);
+    }
+
+    75% {
+        clip-path: inset(40% 0 20% 0);
+    }
+
+    80% {
+        clip-path: inset(20% 0 50% 0);
+    }
+
+    85% {
+        clip-path: inset(10% 0 60% 0);
+    }
+
+    90% {
+        clip-path: inset(15% 0 55% 0);
+    }
+
+    95% {
+        clip-path: inset(25% 0 35% 0);
+    }
+
+    100% {
+        clip-path: inset(30% 0 40% 0);
+    }
 }
 
 /* Glitch Text Component Styles */
@@ -172,15 +236,15 @@ body.matrix-theme {
 body.matrix-theme::before {
     content: "";
     position: fixed;
-    top: 0; 
+    top: 0;
     left: 0;
-    width: 100vw; 
+    width: 100vw;
     height: 100vh;
-    background: 
+    background:
         /* Scanlines */
         linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
         /* Vignette */
-        radial-gradient(circle at center, transparent 60%, rgba(0,0,0,0.8) 100%);
+        radial-gradient(circle at center, transparent 60%, rgba(0, 0, 0, 0.8) 100%);
     background-size: 100% 4px, 100% 100%;
     pointer-events: none;
     z-index: 99999;
@@ -198,7 +262,8 @@ body.matrix-theme::before {
 .matrix-theme nav,
 .matrix-theme header,
 .matrix-theme footer {
-    background-color: rgba(0, 20, 0, 0.95) !important; /* Slight transparency for rain visibility */
+    background-color: rgba(0, 20, 0, 0.95) !important;
+    /* Slight transparency for rain visibility */
 }
 
 /* Prevent Black Curtains: Force overlays to be transparent */
@@ -211,35 +276,37 @@ body.matrix-theme::before {
 }
 
 /* Re-apply slightly transparent background to card interiors - NO BLUR in Matrix Mode */
-.matrix-theme .glass-panel > div.relative,
-.matrix-theme .glass-card > div.relative,
-.matrix-theme nav > ul {
-     background-color: rgba(0, 15, 0, 0.2) !important;
-     backdrop-filter: none !important;
-     backdrop-saturate: 100% !important;
+.matrix-theme .glass-panel>div.relative,
+.matrix-theme .glass-card>div.relative,
+.matrix-theme nav>ul {
+    background-color: rgba(0, 15, 0, 0.2) !important;
+    backdrop-filter: none !important;
+    backdrop-saturate: 100% !important;
 }
 
 /* Allow images to be visible but Matrix-ified */
 .matrix-theme img,
 .matrix-theme .project-image,
 .matrix-theme .card-image {
-    opacity: 1 !important; /* Full visibility */
+    opacity: 1 !important;
+    /* Full visibility */
     filter: grayscale(100%) sepia(100%) hue-rotate(90deg) saturate(300%) contrast(1.1) brightness(1.5) !important;
     border: 1px solid #00ff41 !important;
     box-shadow: 0 0 10px rgba(0, 255, 65, 0.3) !important;
-    background-image: none !important; /* Reset inherited override just in case */
+    background-image: none !important;
+    /* Reset inherited override just in case */
     visibility: visible !important;
 }
 
 /* Special visibility for inputs/buttons if any */
-.matrix-theme button, 
+.matrix-theme button,
 .matrix-theme a {
     background: #000 !important;
     border: 1px solid #00ff41 !important;
     text-transform: uppercase;
 }
 
-.matrix-theme button:hover, 
+.matrix-theme button:hover,
 .matrix-theme a:hover {
     background: #00ff41 !important;
     color: #000 !important;
@@ -251,26 +318,31 @@ body.matrix-theme::before {
     background: transparent !important;
     background-color: transparent !important;
     background-image: none !important;
-    border: none !important; /* Let image border handle it */
+    border: none !important;
+    /* Let image border handle it */
 }
 
 /* Specific fix for project card backgrounds if they use div backgrounds */
 .matrix-theme div[style*="background-image"] {
-    background-image: inherit !important; /* Try to preserve inline styles */
+    background-image: inherit !important;
+    /* Try to preserve inline styles */
     filter: grayscale(100%) sepia(100%) hue-rotate(90deg) saturate(300%) !important;
 }
 
 /* Hide conflicting overlays */
 .matrix-theme .matrix-overlay {
-    display: none; /* Replaced by body pseudo-element */
+    display: none;
+    /* Replaced by body pseudo-element */
 }
+
 /* AI System Glitch - Native Neon Sequence */
 
 .ai-overlay {
     position: fixed;
     inset: 0;
     z-index: 10000;
-    backdrop-filter: blur(4px) brightness(0.35); /* More visible background */
+    backdrop-filter: blur(4px) brightness(0.35);
+    /* More visible background */
     background: rgba(0, 10, 20, 0.4);
     pointer-events: none;
     opacity: 0;
@@ -331,29 +403,89 @@ body.matrix-theme::before {
 }
 
 @keyframes signal-shake {
-    0% { transform: translate(0, 0); }
-    25% { transform: translate(-2px, 2px); }
-    50% { transform: translate(2px, -2px); }
-    75% { transform: translate(-2px, -2px); }
-    100% { transform: translate(2px, 2px); }
+    0% {
+        transform: translate(0, 0);
+    }
+
+    25% {
+        transform: translate(-2px, 2px);
+    }
+
+    50% {
+        transform: translate(2px, -2px);
+    }
+
+    75% {
+        transform: translate(-2px, -2px);
+    }
+
+    100% {
+        transform: translate(2px, 2px);
+    }
 }
 
 @keyframes rgb-shift-1 {
-    0% { clip-path: inset(20% 0 80% 0); transform: translate(-5px, 0); }
-    20% { clip-path: inset(60% 0 10% 0); transform: translate(5px, 0); }
-    40% { clip-path: inset(40% 0 50% 0); transform: translate(-5px, 0); }
-    60% { clip-path: inset(80% 0 5% 0); transform: translate(5px, 0); }
-    80% { clip-path: inset(10% 0 60% 0); transform: translate(-5px, 0); }
-    100% { clip-path: inset(50% 0 30% 0); transform: translate(5px, 0); }
+    0% {
+        clip-path: inset(20% 0 80% 0);
+        transform: translate(-5px, 0);
+    }
+
+    20% {
+        clip-path: inset(60% 0 10% 0);
+        transform: translate(5px, 0);
+    }
+
+    40% {
+        clip-path: inset(40% 0 50% 0);
+        transform: translate(-5px, 0);
+    }
+
+    60% {
+        clip-path: inset(80% 0 5% 0);
+        transform: translate(5px, 0);
+    }
+
+    80% {
+        clip-path: inset(10% 0 60% 0);
+        transform: translate(-5px, 0);
+    }
+
+    100% {
+        clip-path: inset(50% 0 30% 0);
+        transform: translate(5px, 0);
+    }
 }
 
 @keyframes rgb-shift-2 {
-    0% { clip-path: inset(10% 0 60% 0); transform: translate(5px, 0); }
-    20% { clip-path: inset(80% 0 5% 0); transform: translate(-5px, 0); }
-    40% { clip-path: inset(30% 0 20% 0); transform: translate(5px, 0); }
-    60% { clip-path: inset(10% 0 80% 0); transform: translate(-5px, 0); }
-    80% { clip-path: inset(50% 0 30% 0); transform: translate(5px, 0); }
-    100% { clip-path: inset(20% 0 70% 0); transform: translate(-5px, 0); }
+    0% {
+        clip-path: inset(10% 0 60% 0);
+        transform: translate(5px, 0);
+    }
+
+    20% {
+        clip-path: inset(80% 0 5% 0);
+        transform: translate(-5px, 0);
+    }
+
+    40% {
+        clip-path: inset(30% 0 20% 0);
+        transform: translate(5px, 0);
+    }
+
+    60% {
+        clip-path: inset(10% 0 80% 0);
+        transform: translate(-5px, 0);
+    }
+
+    80% {
+        clip-path: inset(50% 0 30% 0);
+        transform: translate(5px, 0);
+    }
+
+    100% {
+        clip-path: inset(20% 0 70% 0);
+        transform: translate(-5px, 0);
+    }
 }
 
 .ai-scan-line {
@@ -362,12 +494,11 @@ body.matrix-theme::before {
     left: 0;
     width: 100%;
     height: 8vh;
-    background: linear-gradient(to bottom, 
-        transparent, 
-        rgba(0, 210, 255, 0.6) 80%, 
-        #00d2ff 95%,
-        #fff 100%
-    );
+    background: linear-gradient(to bottom,
+            transparent,
+            rgba(0, 210, 255, 0.6) 80%,
+            #00d2ff 95%,
+            #fff 100%);
     box-shadow: 0 0 30px rgba(0, 210, 255, 0.8), 0 0 60px rgba(0, 210, 255, 0.4);
     z-index: 10001;
     pointer-events: none;
@@ -380,8 +511,13 @@ body.matrix-theme::before {
 }
 
 @keyframes scan-loop {
-    0% { transform: translateY(-10vh); }
-    100% { transform: translateY(110vh); }
+    0% {
+        transform: translateY(-10vh);
+    }
+
+    100% {
+        transform: translateY(110vh);
+    }
 }
 
 .ai-system-message {
@@ -389,29 +525,31 @@ body.matrix-theme::before {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    z-index: 10007; /* Highest priority */
+    z-index: 10007;
+    /* Highest priority */
     pointer-events: none;
     text-align: center;
-    
+
     font-family: var(--font-share-tech-mono), 'Courier New', monospace;
     font-weight: 700;
     text-transform: uppercase;
     color: #fff;
-    font-size: clamp(3rem, 8vw, 6rem); /* Responsive sizing */
+    font-size: clamp(3rem, 8vw, 6rem);
+    /* Responsive sizing */
     line-height: 1.1;
     letter-spacing: 0.1em;
-    
+
     /* Real Monitor Feel */
-    text-shadow: 
-        2px 2px 0px #ff00c1, 
+    text-shadow:
+        2px 2px 0px #ff00c1,
         -2px -2px 0px #00fff9;
     mix-blend-mode: hard-light;
-    
+
     /* Visibility Backing */
     background: rgba(0, 0, 0, 0.6);
     padding: 2rem 4rem;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 0 50px rgba(0,0,0,0.8);
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(4px);
 
     opacity: 0;
@@ -425,52 +563,127 @@ body.matrix-theme::before {
 
 .ai-system-message.override {
     color: #00fff9;
-    text-shadow: 
-        2px 2px 0px rgba(0,0,0,1),
+    text-shadow:
+        2px 2px 0px rgba(0, 0, 0, 1),
         0 0 20px rgba(0, 255, 249, 0.8);
     border-color: #00fff9;
-    animation: none; /* Stabilize at the end */
+    animation: none;
+    /* Stabilize at the end */
 }
 
 /* Stable Glitch Animation - Jitters but stays centered */
 @keyframes text-glitch-stable {
-    0% { transform: translate(-50%, -50%) skew(0deg); clip-path: inset(0 0 0 0); }
-    20% { transform: translate(-51%, -50%) skew(2deg); clip-path: inset(10% 0 0 0); }
-    40% { transform: translate(-50%, -49%) skew(-2deg); clip-path: inset(0 0 20% 0); }
-    60% { transform: translate(-49%, -50%) skew(1deg); clip-path: inset(0 0 5% 0); }
-    80% { transform: translate(-50%, -51%) skew(-1deg); clip-path: inset(20% 0 0 0); }
-    100% { transform: translate(-50%, -50%) skew(0deg); clip-path: inset(0 0 0 0); }
+    0% {
+        transform: translate(-50%, -50%) skew(0deg);
+        clip-path: inset(0 0 0 0);
+    }
+
+    20% {
+        transform: translate(-51%, -50%) skew(2deg);
+        clip-path: inset(10% 0 0 0);
+    }
+
+    40% {
+        transform: translate(-50%, -49%) skew(-2deg);
+        clip-path: inset(0 0 20% 0);
+    }
+
+    60% {
+        transform: translate(-49%, -50%) skew(1deg);
+        clip-path: inset(0 0 5% 0);
+    }
+
+    80% {
+        transform: translate(-50%, -51%) skew(-1deg);
+        clip-path: inset(20% 0 0 0);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) skew(0deg);
+        clip-path: inset(0 0 0 0);
+    }
 }
 
 @keyframes message-pulse {
-    0%, 100% { opacity: 1; text-shadow: 0 0 20px #00d2ff; }
-    50% { opacity: 0.9; text-shadow: 0 0 30px #00d2ff, 0 0 50px #fff; }
+
+    0%,
+    100% {
+        opacity: 1;
+        text-shadow: 0 0 20px #00d2ff;
+    }
+
+    50% {
+        opacity: 0.9;
+        text-shadow: 0 0 30px #00d2ff, 0 0 50px #fff;
+    }
 }
 
 /* ScreenGlitch Component Styles - User Provided Logic */
 
 @keyframes glitchAnimation {
-    0% { transform: translate(0, 0); opacity: 0.6; }
-    20% { transform: translate(-2px, 2px); opacity: 0.8; }
-    40% { transform: translate(-2px, -2px); opacity: 0.6; }
-    60% { transform: translate(2px, 2px); opacity: 0.8; }
-    80% { transform: translate(2px, -2px); opacity: 0.6; }
-    100% { transform: translate(0, 0); opacity: 0.6; }
+    0% {
+        transform: translate(0, 0);
+        opacity: 0.6;
+    }
+
+    20% {
+        transform: translate(-2px, 2px);
+        opacity: 0.8;
+    }
+
+    40% {
+        transform: translate(-2px, -2px);
+        opacity: 0.6;
+    }
+
+    60% {
+        transform: translate(2px, 2px);
+        opacity: 0.8;
+    }
+
+    80% {
+        transform: translate(2px, -2px);
+        opacity: 0.6;
+    }
+
+    100% {
+        transform: translate(0, 0);
+        opacity: 0.6;
+    }
 }
 
 @keyframes scanline {
-  from { background-position: 0 0; }
-  to { background-position: 0 100%; }
+    from {
+        background-position: 0 0;
+    }
+
+    to {
+        background-position: 0 100%;
+    }
 }
 
 .glitch-wrapper {
-  animation: shake 0.5s infinite;
+    animation: shake 0.5s infinite;
 }
 
 @keyframes shake {
-  0% { transform: translate(0, 0); }
-  25% { transform: translate(-2px, 2px); }
-  50% { transform: translate(-2px, -2px); }
-  75% { transform: translate(2px, 2px); }
-  100% { transform: translate(0, 0); }
+    0% {
+        transform: translate(0, 0);
+    }
+
+    25% {
+        transform: translate(-2px, 2px);
+    }
+
+    50% {
+        transform: translate(-2px, -2px);
+    }
+
+    75% {
+        transform: translate(2px, 2px);
+    }
+
+    100% {
+        transform: translate(0, 0);
+    }
 }

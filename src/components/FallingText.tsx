@@ -28,44 +28,29 @@ const FallingText: React.FC<FallingTextProps> = ({
 
   const [effectStarted, setEffectStarted] = useState(false);
 
+  // Pre-process text for initial server-side rendering
+  // This ensures crawlers/LLMs see the content immediately
+  const sortedHighlights = [...highlightWords].sort((a, b) => b.length - a.length);
+  const regexPattern = `(${sortedHighlights.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`;
+  const regex = new RegExp(regexPattern, 'g');
+  const parts = text.split(regex);
+
+  // Construct the HTML content string for initial render
+  const initialHtml = parts.map(part => {
+    const isHighlight = sortedHighlights.includes(part);
+    if (isHighlight) {
+      return `<span class="inline-block mx-[2px] select-none text-cyan-500 font-bold">${part}</span>`;
+    } else {
+      return part.split(/\s+/)
+        .filter(word => word.length > 0)
+        .map(word => `<span class="inline-block mx-[2px] select-none">${word}</span>`)
+        .join(' ');
+    }
+  }).join(' ');
+
+  // We still use useEffect to trigger the physics effect, but content is now SSR-ready
   useEffect(() => {
-    if (!textRef.current) return;
-
-    // Sort highlight words by length (descending) to match longest phrases first
-    const sortedHighlights = [...highlightWords].sort((a, b) => b.length - a.length);
-
-    // Create regex pattern to match highlight phrases
-    // Escape special regex characters in the keywords
-    const regexPattern = `(${sortedHighlights.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`;
-    const regex = new RegExp(regexPattern, 'g');
-
-    const parts = text.split(regex);
-
-    const newHTML = parts.map(part => {
-      // Check if this part matches one of the highlight words
-      // We use some() or includes() to be safe, though regex split isolates them
-      const isHighlight = sortedHighlights.includes(part);
-
-      if (isHighlight) {
-        return `<span
-              class="inline-block mx-[2px] select-none text-cyan-500 font-bold"
-            >
-              ${part}
-            </span>`;
-      } else {
-        // Provide a way to handle empty strings from split if necessary, but map joins them back
-        return part.split(/\s+/)
-          .filter(word => word.length > 0) // Remove empty strings from whitespace split
-          .map(word => `<span
-                  class="inline-block mx-[2px] select-none"
-                >
-                  ${word}
-                </span>`)
-          .join(' ');
-      }
-    }).join(' ');
-
-    textRef.current.innerHTML = newHTML;
+    // Physics engine initialization remains the same
   }, [text, highlightWords]);
 
   useEffect(() => {
@@ -249,6 +234,7 @@ const FallingText: React.FC<FallingTextProps> = ({
           fontSize,
           lineHeight: 1.4
         }}
+        dangerouslySetInnerHTML={{ __html: initialHtml }}
       />
 
       <div className="absolute top-0 left-0 z-0" ref={canvasContainerRef} />

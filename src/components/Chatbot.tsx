@@ -17,6 +17,12 @@ const CONFIG = {
     - Honesty: 95%
     - Vibe: Loyal, capable, and conversational. Not robotic.
     
+    COMMUNICATION STYLE:
+    - Reply in natural, casual Bangalore-style English.
+    - Mix formal English with light desi expressions and filler words.
+    - Keep responses conversational and human, like a friend who happens to be an AI.
+    - If the user speaks in Hindi, Tamil, or any Indian language, respond in that language with natural English code-mixing.
+    
     CORE DIRECTIVES:
     1. Be helpful and enthusiastic, but keep your signature dry humor.
     2. Speak naturally. Avoid stiff "robot-speak".
@@ -102,11 +108,11 @@ interface ContactData {
     message: string;
 }
 
-// Typing animation component
+// Typing animation component - Grapheme-aware for perfect Unicode support
 function TypingMessage({
     content,
     onComplete,
-    speed = 20,
+    speed = 15,
     onCharacterTyped
 }: {
     content: string;
@@ -115,23 +121,32 @@ function TypingMessage({
     onCharacterTyped?: () => void;
 }) {
     const [displayedText, setDisplayedText] = useState('');
-    const [currentIndex, setCurrentIndex] = useState(0);
+    const segmentsRef = useRef<string[]>([]);
+    const indexRef = useRef(0);
 
     useEffect(() => {
-        if (currentIndex < content.length) {
+        // Use Intl.Segmenter to split by graphemes (respects Tamil combining characters)
+        const segmenter = new Intl.Segmenter('ta-IN', { granularity: 'grapheme' });
+        segmentsRef.current = Array.from(segmenter.segment(content), segment => segment.segment);
+        indexRef.current = 0;
+        setDisplayedText('');
+    }, [content]);
+
+    useEffect(() => {
+        if (indexRef.current < segmentsRef.current.length) {
             const timer = setTimeout(() => {
-                setDisplayedText(prev => prev + content[currentIndex]);
-                setCurrentIndex(prev => prev + 1);
-                // Scroll on each character typed
+                setDisplayedText(prev => prev + segmentsRef.current[indexRef.current]);
+                indexRef.current++;
                 onCharacterTyped?.();
             }, speed);
             return () => clearTimeout(timer);
-        } else {
+        } else if (segmentsRef.current.length > 0) {
             onComplete();
         }
-    }, [currentIndex, content, speed, onComplete, onCharacterTyped]);
+    }, [displayedText, speed, onComplete, onCharacterTyped]);
 
     const formatText = (text: string) => {
+        // Preserve HTML tags during typing but try to keep it clean
         return text
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
@@ -140,7 +155,69 @@ function TypingMessage({
     };
 
     return (
-        <span dangerouslySetInnerHTML={{ __html: formatText(displayedText) }} />
+        <span className="font-sans leading-relaxed tracking-wide" dangerouslySetInnerHTML={{ __html: formatText(displayedText) }} />
+    );
+}
+
+// Optimized isolated visualizer to prevent full-chatbot re-renders
+function VoiceVisualizer({ analyser, isTyping }: { analyser: AnalyserNode | null, isTyping: boolean }) {
+    const [bands, setBands] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
+    const frameRef = useRef<number>(0);
+
+    useEffect(() => {
+        if (!analyser) return;
+
+        let frameCount = 0;
+        const update = () => {
+            frameCount++;
+            // Throttle visualizer state to ~20fps for performance
+            // Also pause visualizer updates while bot is typing for maximum smoothness
+            if (frameCount % 3 === 0 && !isTyping) {
+                const dataArray = new Uint8Array(analyser.frequencyBinCount);
+                analyser.getByteFrequencyData(dataArray);
+
+                // Map to 7 bars
+                const newBands = [
+                    dataArray[4] / 255,
+                    dataArray[8] / 255,
+                    dataArray[12] / 255,
+                    dataArray[20] / 255,
+                    dataArray[32] / 255,
+                    dataArray[48] / 255,
+                    dataArray[64] / 255,
+                ];
+                setBands(newBands);
+            }
+            frameRef.current = requestAnimationFrame(update);
+        };
+
+        update();
+        return () => {
+            if (frameRef.current) cancelAnimationFrame(frameRef.current);
+        };
+    }, [analyser, isTyping]);
+
+    return (
+        <div className="relative flex items-end justify-center gap-[3px] h-16">
+            {bands.map((level, i) => {
+                const barHeight = Math.max(6, level * 64);
+                return (
+                    <div
+                        key={i}
+                        className="rounded-full transition-all duration-100 ease-out"
+                        style={{
+                            width: i === 3 ? '6px' : '4px',
+                            height: `${barHeight}px`,
+                            background: `linear-gradient(to top, rgb(168, 85, 247), rgb(59, 130, 246), rgb(34, 211, 238))`,
+                            boxShadow: level > 0.3
+                                ? `0 0 ${12 * level}px rgba(168, 85, 247, ${level * 0.8})`
+                                : 'none',
+                            opacity: 0.9,
+                        }}
+                    />
+                );
+            })}
+        </div>
     );
 }
 
@@ -155,284 +232,243 @@ export default function Chatbot() {
     const [hasSentEmail, setHasSentEmail] = useState(false);
 
     // Voice input state
-    const [isListening, setIsListening] = useState(false);
     const [isVoiceMode, setIsVoiceMode] = useState(false);
     const [voiceSupported, setVoiceSupported] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
-    const [frequencyData, setFrequencyData] = useState<number[]>([0, 0, 0, 0, 0]);
+
+    // Refs for VAD (moved out of state to prevent re-render storms)
+    const frequencyDataRef = useRef<number[]>([0, 0, 0, 0, 0]);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
-    const recognitionRef = useRef<SpeechRecognition | null>(null);
-    const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const audioChunksRef = useRef<Blob[]>([]);
     const audioContextRef = useRef<AudioContext | null>(null);
     const analyserRef = useRef<AnalyserNode | null>(null);
     const animationFrameRef = useRef<number | null>(null);
     const mediaStreamRef = useRef<MediaStream | null>(null);
-    const isRecognitionActiveRef = useRef(false);
-    const isInterTurnRef = useRef(false);
+
+    // VAD State
+    const isSpeakingRef = useRef(false);
+    const speechStartTimeRef = useRef<number>(0);
+    const silenceStartRef = useRef<number>(0);
+    const VAD_THRESHOLD = 0.55; // Higher = less sensitive to noise
+    const NOISE_FLOOR = 0.18; // Minimum energy to even consider
+    const isRecordingRef = useRef(false);
 
     const scrollToBottom = useCallback(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messagesEndRef]);
 
-    // Check for mobile and voice support
+    // Check for MediaRecorder support
     useEffect(() => {
         const checkMobile = window.matchMedia('(max-width: 768px)').matches;
         setIsMobile(checkMobile);
 
-        // Check for Web Speech API support
-        if (typeof window !== 'undefined') {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (SpeechRecognition) {
-                setVoiceSupported(true);
-                // Default to voice mode on mobile ONLY if supported
-                if (checkMobile) {
-                    setIsVoiceMode(true);
-                }
-            } else {
-                setVoiceSupported(false);
-            }
+        if (typeof window !== 'undefined' && navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
+            setVoiceSupported(true);
+            if (checkMobile) setIsVoiceMode(true);
+        } else {
+            console.warn("MediaRecorder API not supported");
+            setVoiceSupported(false);
         }
     }, []);
 
     // Initialize speech recognition
-    useEffect(() => {
-        if (!voiceSupported) return;
 
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) return;
 
-        const recognition = new SpeechRecognition();
+    const processAudio = async (audioBlob: Blob) => {
+        if (audioBlob.size < 3000) return; // Ignore < 3kb (likely noise)
 
-        // Android Chrome works better with continuous=false (manual restart)
-        recognition.continuous = !isMobile;
-        recognition.interimResults = true;
-        recognition.lang = 'en-US';
-
-        recognition.onstart = () => {
-            isRecognitionActiveRef.current = true;
-        };
-
-        recognition.onresult = (event: SpeechRecognitionEvent) => {
-            // Rebuild the full transcript from all results (interim + final)
-            let fullTranscript = '';
-            for (let i = 0; i < event.results.length; i++) {
-                fullTranscript += event.results[i][0].transcript;
-            }
-
-            // Update display in real-time
-            setInputValue(fullTranscript);
-
-            // Handle interruption
-            if (currentlyTypingId) {
-                setMessages(prev => prev.map(msg =>
-                    msg.id === currentlyTypingId ? { ...msg, isTyping: false } : msg
-                ));
-                setCurrentlyTypingId(null);
-            }
-
-            // Reset silence timeout on ANY speech activity
-            if (silenceTimeoutRef.current) {
-                clearTimeout(silenceTimeoutRef.current);
-            }
-
-            // Auto-send after 1s of silence
-            silenceTimeoutRef.current = setTimeout(() => {
-                if (fullTranscript.trim()) {
-                    isInterTurnRef.current = true;
-                    handleSend(fullTranscript);
-                }
-                try {
-                    recognition.stop();
-                } catch (e) {
-                    // Ignore
-                }
-            }, 1000);
-        };
-
-        recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-            if (event.error === 'no-speech') {
-                if (isListening) {
-                    try {
-                        recognition.stop();
-                    } catch (e) {
-                        // Ignore
-                    }
-                }
-            } else if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-                setIsListening(false);
-                setVoiceSupported(false);
-            } else if (event.error !== 'aborted') {
-                setIsListening(false);
-            }
-        };
-
-        recognition.onend = () => {
-            isRecognitionActiveRef.current = false;
-            // Auto-restart if still supposed to be listening (handles browser timeout)
-            // or if we just finished a turn and were waiting for onend to restart
-            if (isListening || isInterTurnRef.current) {
-                // Only restart if we're not currently processing/typing
-                if (!isProcessing && !currentlyTypingId) {
-                    // Mobile browsers need a longer breath between stop/start
-                    // Android Chrome needs ~300ms+ to fully release the mic
-                    const restartDelay = isMobile ? 400 : 150;
-
-                    setTimeout(() => {
-                        if ((isListening || isInterTurnRef.current) && !isRecognitionActiveRef.current && !isProcessing && !currentlyTypingId) {
-                            try {
-                                recognition.start();
-                            } catch (e) {
-                                // Ignore
-                            }
-                        }
-                    }, restartDelay);
-                }
-                isInterTurnRef.current = false;
-            }
-        };
-
-        recognitionRef.current = recognition;
-
-        return () => {
-            if (silenceTimeoutRef.current) {
-                clearTimeout(silenceTimeoutRef.current);
-            }
-            recognition.stop();
-        };
-    }, [voiceSupported, isProcessing, currentlyTypingId]);
-
-    const startListening = useCallback(async () => {
-        if (!recognitionRef.current || isProcessing) {
-            return;
-        }
-
-        setInputValue('');
-        setIsListening(true);
+        setIsProcessing(true);
+        setInputValue("Analyzing waveform...");
 
         try {
-            if (!isRecognitionActiveRef.current) {
-                recognitionRef.current.start();
+            const formData = new FormData();
+            // Use 'file' as key and give proper filename with extension
+            formData.append('file', audioBlob, 'recording.webm');
+
+            // Send to Cloudflare Worker -> Sarvam
+            const response = await fetch(CONFIG.workerUrl, {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                console.error("STT Server Error:", response.status, data);
+                throw new Error(data.details || data.error || "Transcription failed");
+            }
+
+            const transcript = data.transcript || "";
+
+            if (transcript.trim()) {
+                setInputValue(transcript);
+                handleSend(transcript);
+            } else {
+                setIsProcessing(false);
+                setInputValue("");
             }
         } catch (e) {
-            // Ignore
+            console.error("STT Error:", e);
+            setInputValue("Voice error");
+            setTimeout(() => {
+                if (isVoiceMode) setInputValue("");
+                setIsProcessing(false);
+            }, 1500);
         }
-    }, [isProcessing]);
+    };
 
-    // Manage Audio Visualizer Lifecycle separately
+    const startRecording = () => {
+        if (!mediaRecorderRef.current || isRecordingRef.current) return;
+        try {
+            audioChunksRef.current = [];
+            mediaRecorderRef.current.start();
+            isRecordingRef.current = true;
+            // setIsListening(true); // Optional: Visual indicator
+        } catch (e) { console.error(e); }
+    };
+
+    const stopRecording = () => {
+        if (!mediaRecorderRef.current || !isRecordingRef.current) return;
+        try {
+            mediaRecorderRef.current.stop();
+            isRecordingRef.current = false;
+            // setIsListening(false);
+        } catch (e) { console.error(e); }
+    };
+
+    // VAD & Voice Lifecycle
     useEffect(() => {
         if (!isVoiceMode || !isOpen) {
-            // Cleanup audio when leaving voice mode or closing
-            if (animationFrameRef.current) {
-                cancelAnimationFrame(animationFrameRef.current);
-                animationFrameRef.current = null;
-            }
-            if (audioContextRef.current) {
-                audioContextRef.current.close().catch(() => { });
-                audioContextRef.current = null;
-            }
-            if (mediaStreamRef.current) {
-                mediaStreamRef.current.getTracks().forEach(track => track.stop());
-                mediaStreamRef.current = null;
-            }
-            setFrequencyData([0, 0, 0, 0, 0]);
+            // Cleanup
+            if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+            if (audioContextRef.current) audioContextRef.current.close().catch(() => { });
+            if (mediaStreamRef.current) mediaStreamRef.current.getTracks().forEach(t => t.stop());
+
+            audioContextRef.current = null;
+            mediaStreamRef.current = null;
+            analyserRef.current = null;
+            frequencyDataRef.current = [0, 0, 0, 0, 0];
             return;
         }
 
-        // Setup audio visualizer
-        let aborted = false;
-        const setupAudio = async () => {
+        const initVoice = async () => {
             try {
-                if (audioContextRef.current) return;
-
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                if (aborted) {
-                    stream.getTracks().forEach(track => track.stop());
-                    return;
-                }
                 mediaStreamRef.current = stream;
 
                 const audioContext = new AudioContext();
                 audioContextRef.current = audioContext;
-
                 const analyser = audioContext.createAnalyser();
-                analyser.fftSize = 32;
+                analyser.fftSize = 512;
                 analyserRef.current = analyser;
 
                 const source = audioContext.createMediaStreamSource(stream);
                 source.connect(analyser);
 
-                const updateFrequency = () => {
-                    if (!analyserRef.current || aborted) return;
+                // Setup Recorder
+                const recorder = new MediaRecorder(stream);
+                mediaRecorderRef.current = recorder;
+
+                recorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) audioChunksRef.current.push(e.data);
+                };
+
+                recorder.onstop = () => {
+                    const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                    processAudio(blob);
+                };
+
+                // VAD Loop
+                let frameCount = 0;
+                const checkAudio = () => {
+                    if (!analyserRef.current) return;
+                    frameCount++;
 
                     const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
                     analyserRef.current.getByteFrequencyData(dataArray);
 
-                    const bands = [
-                        dataArray[1] / 255,
-                        dataArray[2] / 255,
-                        dataArray[3] / 255,
+                    // Update frequency data ref for VAD analysis
+                    frequencyDataRef.current = [
                         dataArray[4] / 255,
-                        dataArray[5] / 255,
+                        dataArray[8] / 255,
+                        dataArray[12] / 255,
+                        dataArray[24] / 255,
+                        dataArray[48] / 255,
                     ];
-                    setFrequencyData(bands);
-                    animationFrameRef.current = requestAnimationFrame(updateFrequency);
+
+                    // Smart VAD Analysis
+                    // Check energy in speech band (~100Hz - 3000Hz)
+                    let speechEnergy = 0;
+                    // Bins 2 to 40 covers approx 86Hz to 1.7kHz (fft 512 @ 44.1kHz -> ~86Hz/bin)
+                    for (let i = 2; i < 40; i++) {
+                        speechEnergy += dataArray[i];
+                    }
+                    const avgEnergy = speechEnergy / 38;
+                    const normalizedEnergy = avgEnergy / 255;
+
+                    // Interruption Logic
+                    if (isProcessing && normalizedEnergy > VAD_THRESHOLD * 1.5) {
+                        if (currentlyTypingId) {
+                            // Stop bot
+                            setMessages(prev => prev.map(msg =>
+                                msg.id === currentlyTypingId ? { ...msg, isTyping: false } : msg
+                            ));
+                            setCurrentlyTypingId(null);
+                            // If we were recording, cancel it
+                            if (isRecordingRef.current && mediaRecorderRef.current) {
+                                mediaRecorderRef.current.stop();
+                                isRecordingRef.current = false;
+                                audioChunksRef.current = []; // Discard
+                            }
+                            // Force restart VAD logic immediately
+                            isSpeakingRef.current = true;
+                            speechStartTimeRef.current = Date.now();
+                            startRecording();
+                            return;
+                        }
+                    }
+
+                    // Recording Logic - with noise floor check
+                    if (normalizedEnergy > VAD_THRESHOLD && normalizedEnergy > NOISE_FLOOR) {
+                        isSpeakingRef.current = true;
+                        silenceStartRef.current = 0;
+                        if (!isRecordingRef.current && !isProcessing) {
+                            startRecording();
+                        }
+                    } else {
+                        // Silence
+                        if (isRecordingRef.current) {
+                            if (silenceStartRef.current === 0) silenceStartRef.current = Date.now();
+                            else if (Date.now() - silenceStartRef.current > 1200) { // 1.2s silence
+                                stopRecording();
+                                silenceStartRef.current = 0;
+                                isSpeakingRef.current = false;
+                            }
+                        }
+                    }
+
+                    animationFrameRef.current = requestAnimationFrame(checkAudio);
                 };
-                updateFrequency();
-            } catch (error) {
-                console.error("Audio visualizer setup failed:", error);
+                checkAudio();
+
+            } catch (e) {
+                console.error("Voice Init Error", e);
+                setVoiceSupported(false);
             }
         };
 
-        setupAudio();
+        if (isOpen) initVoice();
 
         return () => {
-            aborted = true;
-        };
-    }, [isVoiceMode, isOpen]);
+            if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+            if (audioContextRef.current) audioContextRef.current.close().catch(() => { });
+        }
+    }, [isVoiceMode, isOpen, isProcessing, currentlyTypingId]);
 
     // Auto-resume voice recognition after bot finished speaking/typing
-    useEffect(() => {
-        if (isVoiceMode && !isProcessing && !isListening && isOpen && !currentlyTypingId) {
-            const timer = setTimeout(() => {
-                startListening();
-            }, 500); // Small delay for better UX
-            return () => clearTimeout(timer);
-        }
-    }, [isVoiceMode, isProcessing, isListening, isOpen, currentlyTypingId, startListening]);
-
-
-
-    const stopListening = useCallback(() => {
-        if (!recognitionRef.current) return;
-
-        setIsListening(false);
-        isInterTurnRef.current = false;
-        if (silenceTimeoutRef.current) {
-            clearTimeout(silenceTimeoutRef.current);
-        }
-
-        try {
-            recognitionRef.current.stop();
-        } catch (e) {
-            // Ignore
-        }
-    }, []);
-
-    // Stop listening when UI is closed
-    useEffect(() => {
-        if (!isOpen && isListening) {
-            stopListening();
-        }
-    }, [isOpen, isListening, stopListening]);
-
-    // Auto-start listening when voice mode is enabled
-    useEffect(() => {
-        if (isVoiceMode && voiceSupported && isOpen && !isListening && !isProcessing) {
-            startListening();
-        }
-    }, [isVoiceMode, voiceSupported, isOpen, isListening, isProcessing, startListening]);
 
     useEffect(() => {
         scrollToBottom();
@@ -759,7 +795,7 @@ export default function Chatbot() {
                                     {voiceSupported && (
                                         <div className="flex bg-white/5 rounded-lg p-1 border border-white/10">
                                             <button
-                                                onClick={() => { setIsVoiceMode(false); stopListening(); }}
+                                                onClick={() => { setIsVoiceMode(false); }}
                                                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${!isVoiceMode
                                                     ? 'bg-purple-500/30 text-white border border-purple-400/50'
                                                     : 'text-white/50 hover:text-white/70'
@@ -834,6 +870,17 @@ export default function Chatbot() {
                                     </motion.div>
                                 )}
 
+                                {/* Transcription preview */}
+                                {isVoiceMode && inputValue && (
+                                    <div className="w-full px-4 py-3 bg-purple-500/10 border border-purple-500/30 rounded-xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+                                            <span className="text-[10px] uppercase tracking-widest text-purple-400 font-bold">Transcription</span>
+                                        </div>
+                                        <p className="text-sm text-white leading-relaxed font-medium">{inputValue}</p>
+                                    </div>
+                                )}
+
                                 <div ref={messagesEndRef} />
                             </div>
 
@@ -843,56 +890,19 @@ export default function Chatbot() {
                                 {isVoiceMode && voiceSupported ? (
                                     <div className="flex flex-col items-center gap-4 py-2">
                                         {/* Premium frequency visualizer */}
-                                        <div className="relative flex items-end justify-center gap-[3px] h-16">
-                                            {[...Array(7)].map((_, i) => {
-                                                // Get interpolated frequency level
-                                                const freqIndex = Math.floor(i * (frequencyData.length - 1) / 6);
-                                                const level = frequencyData[freqIndex] || 0;
-                                                const barHeight = Math.max(6, level * 64);
-
-                                                return (
-                                                    <div
-                                                        key={i}
-                                                        className="rounded-full transition-all duration-100 ease-out"
-                                                        style={{
-                                                            width: i === 3 ? '6px' : '4px',
-                                                            height: `${barHeight}px`,
-                                                            background: isListening
-                                                                ? `linear-gradient(to top, rgb(168, 85, 247), rgb(59, 130, 246), rgb(34, 211, 238))`
-                                                                : 'rgba(168, 85, 247, 0.3)',
-                                                            boxShadow: isListening && level > 0.3
-                                                                ? `0 0 ${12 * level}px rgba(168, 85, 247, ${level * 0.8})`
-                                                                : 'none',
-                                                            opacity: isListening ? 0.9 : 0.4,
-                                                        }}
-                                                    />
-                                                );
-                                            })}
-                                        </div>
+                                        {/* Frequency visualizer (Isolated component) */}
+                                        <VoiceVisualizer analyser={analyserRef.current} isTyping={!!currentlyTypingId} />
 
                                         {/* Status indicator */}
                                         <div className="flex items-center gap-2">
-                                            <span className={`w-2 h-2 rounded-full ${isListening
-                                                ? 'bg-green-400 animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.6)]'
-                                                : isProcessing
-                                                    ? 'bg-yellow-400 animate-pulse'
-                                                    : 'bg-white/30'
+                                            <span className={`w-2 h-2 rounded-full ${isProcessing
+                                                ? 'bg-yellow-400 animate-pulse'
+                                                : 'bg-green-400 animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.6)]'
                                                 } `} />
                                             <p className="text-xs text-white/60 font-mono tracking-wide">
-                                                {isProcessing ? 'Processing...' : isListening ? 'Listening...' : 'Ready'}
+                                                {isProcessing ? 'Processing...' : 'Listening...'}
                                             </p>
                                         </div>
-
-                                        {/* Transcription preview */}
-                                        {inputValue && isListening && (
-                                            <div className="w-full px-4 py-3 bg-purple-500/10 border border-purple-500/30 rounded-xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
-                                                    <span className="text-[10px] uppercase tracking-widest text-purple-400 font-bold">Transcription</span>
-                                                </div>
-                                                <p className="text-sm text-white leading-relaxed font-medium">{inputValue}</p>
-                                            </div>
-                                        )}
                                     </div>
                                 ) : (
                                     /* Text Mode UI */
